@@ -67,10 +67,10 @@ Sample        dataset / collection element name
 tox_gene      ``tox`` | ``novel tox allele`` | ``review`` | ``tox not present``
 tox_allele    allele number; ``~N`` novel (closest N); ``?N`` partial; ``NA``
 ST            sequence type; ``novel`` (new allele combination); ``NA``
+mlst_profile  per-locus calls, e.g. ``atpA(1);dnaE(2);...``
 Identity      % identity of the best tox hit
 Coverage      % of the tox allele covered by the best hit
 db_version    e.g. ``Pasteur_2026-10``
-mlst_profile  per-locus calls, e.g. ``atpA(1);dnaE(2);...``
 notes         QC flags and reasons for review
 ============  ==============================================================
 

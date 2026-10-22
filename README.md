@@ -18,14 +18,49 @@ refreshed twice yearly through a reviewed pull request.
 
 ## Output
 
+One tab-separated row per assembly. Example run on five assemblies
+(values are illustrative, chosen to show each kind of result):
+
 ```tsv
-Sample  tox_gene         tox_allele  ST   Identity  Coverage  db_version       mlst_profile           notes
-CD001   tox              23          534  100.0     100.0     Pasteur_2026-10  atpA(..);dnaE(..);...
-CD002   tox not present  NA          534  0.0       0.0       Pasteur_2026-10  atpA(..);dnaE(..);...
+Sample	tox_gene	tox_allele	ST	mlst_profile	Identity	Coverage	db_version	notes
+CD001	tox	23	534	atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3)	100.0	100.0	Pasteur_2026-10	
+CD002	tox not present	NA	534	atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3)	0.0	0.0	Pasteur_2026-10	
+CD003	novel tox allele	~23	8	atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1)	99.9	100.0	Pasteur_2026-10	closest tox allele 23; confirm novel allele
+CD004	review	?23	novel	atpA(1);dnaE(2);dnaK(1);fusA(7);leuA(10);odhA(4);rpoB(3)	100.0	53.5	Pasteur_2026-10	exact alleles at all loci but profile not in database; tox-like hit: partial coverage; hit at contig edge (possible assembly break)
+CD005	tox not present	NA	NA	atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3)	0.0	0.0	Pasteur_2026-10	
 ```
 
-The first seven columns are the agreed report format; `mlst_profile` and
-`notes` are appended for traceability and QC.
+The same report opened in Excel or Galaxy:
+
+| Sample | tox_gene | tox_allele | ST | mlst_profile | Identity | Coverage | db_version | notes |
+|---|---|---|---|---|---:|---:|---|---|
+| CD001 | tox | 23 | 534 | atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3) | 100.0 | 100.0 | Pasteur_2026-10 | |
+| CD002 | tox not present | NA | 534 | atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3) | 0.0 | 0.0 | Pasteur_2026-10 | |
+| CD003 | novel tox allele | ~23 | 8 | atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1) | 99.9 | 100.0 | Pasteur_2026-10 | closest tox allele 23; confirm novel allele |
+| CD004 | review | ?23 | novel | atpA(1);dnaE(2);dnaK(1);fusA(7);leuA(10);odhA(4);rpoB(3) | 100.0 | 53.5 | Pasteur_2026-10 | exact alleles at all loci but profile not in database; tox-like hit: partial coverage; hit at contig edge (possible assembly break) |
+| CD005 | tox not present | NA | NA | atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3) | 0.0 | 0.0 | Pasteur_2026-10 | |
+
+How to read it:
+
+- **CD001** — tox detected, exact match to allele 23, ST534.
+- **CD002** — no tox, ST534.
+- **CD003** — tox with a single SNP difference from allele 23: a candidate new allele to confirm.
+- **CD004** — tox found on only 53.5% of its length at the end of a contig, so it is flagged for review rather than called absent. All seven MLST alleles are known but the combination is new (`novel` ST).
+- **CD005** — no tox; fusA is a new allele (`~4`, closest 4), so no ST can be assigned.
+
+### Columns
+
+| Column | Meaning |
+|---|---|
+| `Sample` | file name, or dataset / collection element name in Galaxy |
+| `tox_gene` | `tox`, `novel tox allele`, `review` or `tox not present` |
+| `tox_allele` | allele number; `~N` novel (closest N); `?N` partial; `NA` |
+| `ST` | sequence type; `novel` (known alleles, new combination); `NA` |
+| `mlst_profile` | per-locus allele calls (see MLST calls below) |
+| `Identity` | % identity of the best tox hit |
+| `Coverage` | % of the tox allele covered by the best hit |
+| `db_version` | database used, e.g. `Pasteur_2026-10` |
+| `notes` | QC flags and reasons for review; blank when nothing to flag |
 
 ### tox calls
 

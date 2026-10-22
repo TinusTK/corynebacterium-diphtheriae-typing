@@ -104,9 +104,10 @@ class TypingTests(unittest.TestCase):
     # tests -----------------------------------------------------------------
     def test_columns_match_spec(self):
         rows = self.run_tool(self.genome("cols", ["1"] * 7))
-        self.assertEqual(list(rows[0].keys())[:7],
+        self.assertEqual(list(rows[0].keys()),
                          ["Sample", "tox_gene", "tox_allele", "ST",
-                          "Identity", "Coverage", "db_version"])
+                          "mlst_profile", "Identity", "Coverage",
+                          "db_version", "notes"])
         self.assertEqual(rows[0]["db_version"], "SYNTHETIC_TEST")
         self.assertEqual(rows[0]["Sample"], "cols")
 

@@ -28,10 +28,8 @@ from collections import defaultdict
 __version__ = "1.0.0"
 
 OUTPUT_COLUMNS = [
-    "Sample", "tox_gene", "tox_allele", "ST",
-    "Identity", "Coverage", "db_version",
-    # Extra columns (appended after the agreed report columns)
-    "mlst_profile", "notes",
+    "Sample", "tox_gene", "tox_allele", "ST", "mlst_profile",
+    "Identity", "Coverage", "db_version", "notes",
 ]
 
 BLAST_FIELDS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
