@@ -1,7 +1,10 @@
 name: Release
 
-# Push a tag such as v1.0 after merging a database update.
-# Produces a Galaxy-ready tarball: the tool with the database bundled inside.
+# Push a tag such as v1.0 after merging a database update. This:
+#   1. bundles the tool with the database,
+#   2. runs the Galaxy tool tests,
+#   3. creates a GitHub release with the bundle attached,
+#   4. publishes to the Galaxy Tool Shed (if the TOOLSHED_API_KEY secret is set).
 on:
   push:
     tags: ["v*"]
@@ -14,16 +17,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bundle tool + database
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check database is populated
         run: |
           DBV=$(grep -v '^#' database/VERSION.txt | head -1)
-          bash scripts/bundle_tool.sh build
-          tar -czf "cdiphtheriae_typing-${GITHUB_REF_NAME}-${DBV}.tar.gz" -C build cdiphtheriae_typing
+          if [ "$DBV" = "UNPOPULATED" ] || [ ! -f database/mlst/profiles.tsv ]; then
+            echo "::error::database/ is empty - merge a database update before releasing"; exit 1
+          fi
           echo "DBV=$DBV" >> "$GITHUB_ENV"
-      - name: Create release
+
+      - name: Bundle tool + database
+        run: bash scripts/bundle_tool.sh build
+
+      - name: Lint and test
+        run: |
+          pip install planemo
+          planemo lint --fail_level warn build/cdiphtheriae_typing
+          planemo shed_lint --tools --ensure_metadata build/cdiphtheriae_typing
+          planemo test --test_output build/planemo_report.html build/cdiphtheriae_typing
+
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" *.tar.gz \
+          tar -czf "cdiphtheriae_typing-${GITHUB_REF_NAME}-${DBV}.tar.gz" -C build cdiphtheriae_typing
+          gh release create "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html \
             --title "$GITHUB_REF_NAME (database $DBV)" \
-            --notes "Galaxy tool bundle with database **$DBV**."
+            --notes "Galaxy tool bundle with database **$DBV**. Tool tests passed (report attached)."
+
+      - name: Publish to Galaxy Tool Shed
+        env:
+          TOOLSHED_API_KEY: ${{ secrets.TOOLSHED_API_KEY }}
+        run: |
+          if [ -z "$TOOLSHED_API_KEY" ]; then
+            echo "::warning::TOOLSHED_API_KEY not set - skipping Tool Shed publish"; exit 0
+          fi
+          planemo shed_update build/cdiphtheriae_typing \
+            --shed_target toolshed \
+            --shed_key "$TOOLSHED_API_KEY" \
+            --force_repository_creation \
+            --check_diff \
+            --message "${GITHUB_REF_NAME}: database ${DBV}"

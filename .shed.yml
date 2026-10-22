@@ -4,3 +4,9 @@ description: tox detection, tox allele and MLST typing of Corynebacterium diphth
 categories:
   - Sequence Analysis
 type: unrestricted
+long_description: |
+  Types Corynebacterium diphtheriae genome assemblies against the BIGSdb-Pasteur
+  database: tox gene detection, tox allele assignment and 7-gene MLST sequence type,
+  with the database version recorded on every result.
+homepage_url: https://github.com/TinusTK/galaxy-corynebacterium-diphtheriae-typing
+remote_repository_url: https://github.com/TinusTK/galaxy-corynebacterium-diphtheriae-typing

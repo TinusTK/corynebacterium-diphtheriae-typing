@@ -131,8 +131,10 @@ alleles and profiles, compares them with `database/`, runs the tests and opens
 a **pull request** with a change table and reviewer checklist. Nothing is
 deployed automatically.
 
-After review and merge, tag a release (`git tag v1.1 && git push --tags`);
-`release.yml` builds a Galaxy-ready tarball with the database bundled.
+After review and merge, tag a release (`git tag v1.1 && git push --tags`, or
+*Releases → Draft a new release* on GitHub). `release.yml` then bundles the
+tool with the database, runs the Galaxy tool tests, creates a GitHub release,
+and publishes the new revision to the Galaxy Tool Shed.
 
 | Release | Database |
 |---|---|
@@ -180,7 +182,29 @@ error, re-run step 3 and replace the two access secrets.
 Also enable *Settings → Actions → General → Allow GitHub Actions to create and
 approve pull requests*.
 
-## Galaxy installation
+## Galaxy
+
+### Publishing to the Galaxy Tool Shed
+
+Every tagged release is published to the main Galaxy Tool Shed
+(toolshed.g2.bx.psu.edu) as `tinustk/cdiphtheriae_typing`. One-time setup:
+
+1. Create an account on https://toolshed.g2.bx.psu.edu with the username
+   **tinustk** (must match `owner` in `.shed.yml`).
+2. In the Tool Shed: *User → Preferences → Manage API key* → generate a key.
+3. Add it to this repo as the secret **`TOOLSHED_API_KEY`**
+   (Settings → Secrets and variables → Actions).
+
+Without the secret, releases still build and test but skip publishing.
+
+### Getting it onto Galaxy Australia
+
+After the first Tool Shed release, submit
+https://site.usegalaxy.org.au/request/tool with the Tool Shed link, a test
+assembly and the validation results from `docs/VALIDATION.md`. For later
+releases, ask them to update to the new revision.
+
+### Local Galaxy install
 
 ```bash
 bash scripts/bundle_tool.sh            # -> build/cdiphtheriae_typing/

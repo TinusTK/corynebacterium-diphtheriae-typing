@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,3 +24,45 @@ jobs:
             -d database -o out.tsv
           cat out.tsv
           grep -q "tox not present" out.tsv
+
+  planemo-lint:
+    name: Galaxy wrapper lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install planemo
+      - name: planemo lint
+        run: planemo lint --fail_level warn tool/
+
+  planemo-test:
+    name: Galaxy tool test
+    runs-on: ubuntu-latest
+    needs: [unit, planemo-lint]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check database is populated
+        id: db
+        run: |
+          if [ -f database/mlst/profiles.tsv ]; then echo "ready=true" >> "$GITHUB_OUTPUT";
+          else echo "ready=false" >> "$GITHUB_OUTPUT";
+               echo "::notice::Skipping Galaxy tool test - database not populated yet"; fi
+      - uses: actions/setup-python@v5
+        if: steps.db.outputs.ready == 'true'
+        with:
+          python-version: "3.12"
+      - name: Bundle tool with database
+        if: steps.db.outputs.ready == 'true'
+        run: |
+          pip install planemo
+          bash scripts/bundle_tool.sh build
+      - name: planemo test
+        if: steps.db.outputs.ready == 'true'
+        run: planemo test --test_output build/planemo_report.html build/cdiphtheriae_typing
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.db.outputs.ready == 'true'
+        with:
+          name: planemo-report
+          path: build/planemo_report.html

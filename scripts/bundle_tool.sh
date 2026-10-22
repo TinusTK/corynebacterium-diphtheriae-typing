@@ -8,7 +8,8 @@ DEST="$OUT/cdiphtheriae_typing"
 [ -f "$ROOT/database/mlst/profiles.tsv" ] || {
   echo "database/ is empty - run scripts/update_database.py first" >&2; exit 1; }
 rm -rf "$DEST" && mkdir -p "$DEST"
-cp "$ROOT"/tool/tool.xml "$ROOT"/tool/diphtheria_typing.py "$DEST"/
+cp "$ROOT"/tool/tool.xml "$ROOT"/tool/diphtheria_typing.py "$ROOT"/.shed.yml "$DEST"/
+cp "$ROOT"/LICENSE "$DEST"/
 cp -r "$ROOT"/tool/test-data "$DEST"/
 cp -r "$ROOT"/database "$DEST"/database
 echo "Bundled tool at $DEST (database $(grep -v '^#' "$ROOT/database/VERSION.txt" | head -1))"
