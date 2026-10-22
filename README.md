@@ -12,20 +12,19 @@ refreshed twice yearly through a reviewed pull request.
 
 > **tox gene ≠ toxin production.** Non-toxigenic *tox*-bearing (NTTB) strains
 > exist. Confirm toxigenicity phenotypically (e.g. modified Elek test) as per
-> laboratory procedure. This tool does not determine species — the Species
-> column is taken from the laboratory identification.
+> laboratory procedure.
 
 ---
 
 ## Output
 
 ```tsv
-Sample  Species                      tox_gene         tox_allele  ST   Identity  Coverage  db_version       mlst_profile                                   notes
-CD001   Corynebacterium diphtheriae  tox              23          534  100.0     100.0     Pasteur_2026-10  atpA(..);dnaE(..);...
-CD002   Corynebacterium diphtheriae  tox not present  NA          534  0.0       0.0       Pasteur_2026-10  atpA(..);dnaE(..);...
+Sample  tox_gene         tox_allele  ST   Identity  Coverage  db_version       mlst_profile           notes
+CD001   tox              23          534  100.0     100.0     Pasteur_2026-10  atpA(..);dnaE(..);...
+CD002   tox not present  NA          534  0.0       0.0       Pasteur_2026-10  atpA(..);dnaE(..);...
 ```
 
-The first eight columns are the agreed report format; `mlst_profile` and
+The first seven columns are the agreed report format; `mlst_profile` and
 `notes` are appended for traceability and QC.
 
 ### tox calls
@@ -85,7 +84,7 @@ cdiph-typing -d database -i assemblies/*.fasta -o results.tsv
 ```
 
 Batch a folder: `cdiph-typing -d database $(for f in assemblies/*.fasta; do echo -i $f; done) -o results.tsv`.
-Options: `cdiph-typing --help` (thresholds, threads, sample names, species label).
+Options: `cdiph-typing --help` (thresholds, threads, sample names).
 
 Tests: `python -m unittest discover -s tests -v`
 

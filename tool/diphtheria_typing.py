@@ -28,9 +28,9 @@ from collections import defaultdict
 __version__ = "1.0.0"
 
 OUTPUT_COLUMNS = [
-    "Sample", "Species", "tox_gene", "tox_allele", "ST",
+    "Sample", "tox_gene", "tox_allele", "ST",
     "Identity", "Coverage", "db_version",
-    # Extra columns (appended so the first 8 match the agreed report format)
+    # Extra columns (appended after the agreed report columns)
     "mlst_profile", "notes",
 ]
 
@@ -279,9 +279,9 @@ def call_tox(hits, min_id, min_cov):
     return out
 
 
-def type_sample(name, assembly, db, query_fasta, args, species):
+def type_sample(name, assembly, db, query_fasta, args):
     row = {c: "" for c in OUTPUT_COLUMNS}
-    row.update(Sample=name, Species=species, db_version=db.version)
+    row.update(Sample=name, db_version=db.version)
     notes = []
     try:
         n_contigs, total = validate_fasta(assembly)
@@ -352,9 +352,6 @@ def parse_args(argv=None):
                         "default: file name without extension)")
     p.add_argument("-d", "--db", required=True, help="Database directory")
     p.add_argument("-o", "--output", default="-", help="Output TSV (default stdout)")
-    p.add_argument("--species", default="Corynebacterium diphtheriae",
-                   help="Value for the Species column (not computed; "
-                        "taken from the laboratory identification)")
     p.add_argument("--tox-min-identity", type=float, default=99.0)
     p.add_argument("--tox-min-coverage", type=float, default=95.0)
     p.add_argument("--mlst-min-identity", type=float, default=95.0)
@@ -380,7 +377,7 @@ def main(argv=None):
     qdir = tempfile.mkdtemp(prefix="diphtyp_q_", dir=args.tmpdir)
     try:
         query = build_query(db, qdir)
-        rows = [type_sample(n, f, db, query, args, args.species)
+        rows = [type_sample(n, f, db, query, args)
                 for n, f in zip(names, args.input)]
     finally:
         shutil.rmtree(qdir, ignore_errors=True)

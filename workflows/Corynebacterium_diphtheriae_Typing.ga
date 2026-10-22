@@ -60,7 +60,7 @@
         "left": 300,
         "top": 0
       },
-      "tool_state": "{\"input\": {\"__class__\": \"ConnectedValue\"}, \"species\": \"Corynebacterium diphtheriae\", \"adv\": {\"tox_min_identity\": \"99\", \"tox_min_coverage\": \"95\", \"mlst_min_identity\": \"95\", \"mlst_min_coverage\": \"95\"}}",
+      "tool_state": "{\"input\": {\"__class__\": \"ConnectedValue\"}, \"adv\": {\"tox_min_identity\": \"99\", \"tox_min_coverage\": \"95\", \"mlst_min_identity\": \"95\", \"mlst_min_coverage\": \"95\"}}",
       "uuid": "6a965eb9-4cea-442a-bdd3-eb13e974a384",
       "workflow_outputs": [
         {

@@ -15,7 +15,6 @@ python '$__tool_directory__/diphtheria_typing.py'
         --name '$f.element_identifier'
     #end for
     --db '$__tool_directory__/database'
-    --species '$species'
     --tox-min-identity $adv.tox_min_identity
     --tox-min-coverage $adv.tox_min_coverage
     --mlst-min-identity $adv.mlst_min_identity
@@ -27,11 +26,6 @@ python '$__tool_directory__/diphtheria_typing.py'
         <param name="input" type="data" format="fasta" multiple="true"
                label="Assembly FASTA"
                help="One or more assemblies, or a collection. Sample names are taken from the dataset/element names."/>
-        <param name="species" type="text" value="Corynebacterium diphtheriae"
-               label="Species reported"
-               help="Written to the Species column as given. Species is NOT computed by this tool - use the laboratory identification.">
-            <validator type="regex" message="Letters, digits, spaces, dots and hyphens only">^[A-Za-z0-9 .\-]+$</validator>
-        </param>
         <section name="adv" title="Thresholds" expanded="false">
             <param name="tox_min_identity" type="float" value="99" min="80" max="100" label="tox minimum identity (%)"/>
             <param name="tox_min_coverage" type="float" value="95" min="30" max="100" label="tox minimum coverage (%)"/>
@@ -49,7 +43,7 @@ python '$__tool_directory__/diphtheria_typing.py'
             <param name="input" value="no_loci.fasta"/>
             <output name="output">
                 <assert_contents>
-                    <has_n_columns n="10"/>
+                    <has_n_columns n="9"/>
                     <has_text text="tox not present"/>
                     <has_text text="no MLST loci found"/>
                 </assert_contents>
@@ -70,7 +64,6 @@ BIGSdb-Pasteur database:
 
 ============  ==============================================================
 Sample        dataset / collection element name
-Species       as entered (not computed)
 tox_gene      ``tox`` | ``novel tox allele`` | ``review`` | ``tox not present``
 tox_allele    allele number; ``~N`` novel (closest N); ``?N`` partial; ``NA``
 ST            sequence type; ``novel`` (new allele combination); ``NA``
