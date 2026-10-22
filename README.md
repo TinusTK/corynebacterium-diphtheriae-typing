@@ -148,62 +148,6 @@ Since 1 January 2025 BIGSdb-Pasteur only serves data curated after that date to
 authenticated API users. Without credentials the updater still works but
 **newer alleles and STs will be missing**, and the PR says so in bold.
 
-#### Pasteur API credentials (one-time setup)
-
-1. **Create an account** at https://bigsdb.pasteur.fr/register/ and register
-   for the *C. diphtheriae* species complex **sequence definitions** database
-   (`pubmlst_diphtheria_seqdef`).
-2. **Request an API key** by emailing bigsdb@pasteur.fr (academic / public
-   health) with your username, affiliation, institutional email, sector,
-   the database name, and how you'll use it (automated twice-yearly typing
-   database updates). See https://bigsdb.pasteur.fr/requesting-api-key.
-   They reply with a **consumer key** and **consumer secret**.
-3. **Get an access token** on your own computer (once):
-   ```bash
-   pip install requests requests-oauthlib
-   python scripts/bigsdb_auth.py
-   ```
-   Paste the consumer key/secret, open the printed link, log in, click
-   Authorize, paste the code back. It prints the access token and secret.
-4. **Add four repository secrets** (Settings → Secrets and variables → Actions
-   → New repository secret):
-
-   | Name | Value |
-   |---|---|
-   | `BIGSDB_CONSUMER_KEY` | consumer key from Pasteur |
-   | `BIGSDB_CONSUMER_SECRET` | consumer secret from Pasteur |
-   | `BIGSDB_ACCESS_TOKEN` | from `bigsdb_auth.py` |
-   | `BIGSDB_ACCESS_SECRET` | from `bigsdb_auth.py` |
-
-The access token doesn't expire unless revoked; the updater swaps it for a
-12-hour session token on each run. If an update fails with a session-token
-error, re-run step 3 and replace the two access secrets.
-
-Also enable *Settings → Actions → General → Allow GitHub Actions to create and
-approve pull requests*.
-
-## Galaxy
-
-### Publishing to the Galaxy Tool Shed
-
-Every tagged release is published to the main Galaxy Tool Shed
-(toolshed.g2.bx.psu.edu) as `tinustk/cdiphtheriae_typing`. One-time setup:
-
-1. Create an account on https://toolshed.g2.bx.psu.edu with the username
-   **tinustk** (must match `owner` in `.shed.yml`).
-2. In the Tool Shed: *User → Preferences → Manage API key* → generate a key.
-3. Add it to this repo as the secret **`TOOLSHED_API_KEY`**
-   (Settings → Secrets and variables → Actions).
-
-Without the secret, releases still build and test but skip publishing.
-
-### Getting it onto Galaxy Australia
-
-After the first Tool Shed release, submit
-https://site.usegalaxy.org.au/request/tool with the Tool Shed link, a test
-assembly and the validation results from `docs/VALIDATION.md`. For later
-releases, ask them to update to the new revision.
-
 ### Local Galaxy install
 
 ```bash
