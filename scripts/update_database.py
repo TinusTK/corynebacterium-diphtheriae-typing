@@ -15,12 +15,12 @@ Since 1 January 2025 BIGSdb-Pasteur only returns data curated after that date
 to authenticated API users. Without credentials this script still runs but
 newer alleles/STs will be MISSING, and the summary says so in bold.
 
-To authenticate, register at https://bigsdb.pasteur.fr, obtain OAuth1
-consumer + session/access tokens (see BIGSdb API docs), and set:
-
-  BIGSDB_CONSUMER_KEY, BIGSDB_CONSUMER_SECRET,
-  BIGSDB_TOKEN, BIGSDB_TOKEN_SECRET
-
+To authenticate (see README "Pasteur API credentials"):
+  1. get a consumer key/secret from the BIGSdb-Pasteur team
+  2. run scripts/bigsdb_auth.py once to get a long-lived access token
+  3. set BIGSDB_CONSUMER_KEY, BIGSDB_CONSUMER_SECRET,
+         BIGSDB_ACCESS_TOKEN, BIGSDB_ACCESS_SECRET
+This script exchanges the access token for a 12-hour session token itself.
 (requires `pip install requests requests-oauthlib`).
 
 Exit codes: 0 = updated (changes written), 3 = no changes, other = error.
@@ -52,13 +52,28 @@ class Client:
         self.session = None
         keys = [os.environ.get(k) for k in (
             "BIGSDB_CONSUMER_KEY", "BIGSDB_CONSUMER_SECRET",
-            "BIGSDB_TOKEN", "BIGSDB_TOKEN_SECRET")]
+            "BIGSDB_ACCESS_TOKEN", "BIGSDB_ACCESS_SECRET")]
+        if any(keys) and not all(keys):
+            raise RuntimeError("some BIGSDB_* credentials are set but not all four")
         self.authenticated = all(keys)
         if self.authenticated:
             from requests_oauthlib import OAuth1Session
+            # Access tokens are long-lived but only grant session tokens;
+            # API resources need a session token (valid ~12 h).
+            acc = OAuth1Session(keys[0], client_secret=keys[1],
+                                resource_owner_key=keys[2],
+                                resource_owner_secret=keys[3])
+            r = acc.get(f"{self.base}/oauth/get_session_token", timeout=60)
+            if r.status_code != 200:
+                raise RuntimeError(
+                    f"could not get session token ({r.status_code}): {r.text[:300]} "
+                    "- access token may be revoked; re-run scripts/bigsdb_auth.py")
+            tok = r.json()
             self.session = OAuth1Session(keys[0], client_secret=keys[1],
-                                         resource_owner_key=keys[2],
-                                         resource_owner_secret=keys[3])
+                                         resource_owner_key=tok["oauth_token"],
+                                         resource_owner_secret=tok["oauth_token_secret"])
+            print("Authenticated to BIGSdb-Pasteur (session token obtained)",
+                  file=sys.stderr)
 
     def get(self, path_or_url, retries=4):
         url = path_or_url if path_or_url.startswith("http") \

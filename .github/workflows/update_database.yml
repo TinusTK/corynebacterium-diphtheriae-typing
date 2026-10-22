@@ -35,8 +35,8 @@ jobs:
         env:
           BIGSDB_CONSUMER_KEY: ${{ secrets.BIGSDB_CONSUMER_KEY }}
           BIGSDB_CONSUMER_SECRET: ${{ secrets.BIGSDB_CONSUMER_SECRET }}
-          BIGSDB_TOKEN: ${{ secrets.BIGSDB_TOKEN }}
-          BIGSDB_TOKEN_SECRET: ${{ secrets.BIGSDB_TOKEN_SECRET }}
+          BIGSDB_ACCESS_TOKEN: ${{ secrets.BIGSDB_ACCESS_TOKEN }}
+          BIGSDB_ACCESS_SECRET: ${{ secrets.BIGSDB_ACCESS_SECRET }}
         run: |
           LABEL="${{ github.event.inputs.version_label }}"
           [ -z "$LABEL" ] && LABEL="Pasteur_$(date -u +%Y-%m)"
