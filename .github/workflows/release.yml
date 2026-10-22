@@ -1,0 +1,29 @@
+name: Release
+
+# Push a tag such as v1.0 after merging a database update.
+# Produces a Galaxy-ready tarball: the tool with the database bundled inside.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle tool + database
+        run: |
+          DBV=$(grep -v '^#' database/VERSION.txt | head -1)
+          bash scripts/bundle_tool.sh build
+          tar -czf "cdiphtheriae_typing-${GITHUB_REF_NAME}-${DBV}.tar.gz" -C build cdiphtheriae_typing
+          echo "DBV=$DBV" >> "$GITHUB_ENV"
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" *.tar.gz \
+            --title "$GITHUB_REF_NAME (database $DBV)" \
+            --notes "Galaxy tool bundle with database **$DBV**."

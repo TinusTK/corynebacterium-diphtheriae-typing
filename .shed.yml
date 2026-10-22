@@ -1,0 +1,6 @@
+name: cdiphtheriae_typing
+owner: tinustk
+description: tox detection, tox allele and MLST typing of Corynebacterium diphtheriae assemblies
+categories:
+  - Sequence Analysis
+type: unrestricted

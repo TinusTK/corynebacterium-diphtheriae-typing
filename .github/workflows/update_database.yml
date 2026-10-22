@@ -1,0 +1,66 @@
+name: Update database (BIGSdb-Pasteur)
+
+# Twice yearly: 1 April and 1 October, 00:00 UTC (09:30 Darwin).
+# Opens a pull request for manual review - never deploys anything.
+on:
+  schedule:
+    - cron: "0 0 1 4,10 *"
+  workflow_dispatch:
+    inputs:
+      version_label:
+        description: "Database version label (default Pasteur_YYYY-MM)"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests requests-oauthlib
+          sudo apt-get update && sudo apt-get install -y ncbi-blast+
+
+      - name: Download and compare
+        id: update
+        env:
+          BIGSDB_CONSUMER_KEY: ${{ secrets.BIGSDB_CONSUMER_KEY }}
+          BIGSDB_CONSUMER_SECRET: ${{ secrets.BIGSDB_CONSUMER_SECRET }}
+          BIGSDB_TOKEN: ${{ secrets.BIGSDB_TOKEN }}
+          BIGSDB_TOKEN_SECRET: ${{ secrets.BIGSDB_TOKEN_SECRET }}
+        run: |
+          LABEL="${{ github.event.inputs.version_label }}"
+          [ -z "$LABEL" ] && LABEL="Pasteur_$(date -u +%Y-%m)"
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          set +e
+          python scripts/update_database.py --db database \
+            --summary "$RUNNER_TEMP/CHANGES_DB.md" --version-label "$LABEL"
+          code=$?
+          set -e
+          if [ $code -eq 3 ]; then echo "changed=false" >> "$GITHUB_OUTPUT";
+          elif [ $code -eq 0 ]; then echo "changed=true" >> "$GITHUB_OUTPUT";
+          else exit $code; fi
+
+      - name: Run tests against updated database
+        if: steps.update.outputs.changed == 'true'
+        run: python -m unittest discover -s tests -v
+
+      - name: Open pull request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: db-update/${{ steps.update.outputs.label }}
+          commit-message: "Database update ${{ steps.update.outputs.label }}"
+          title: "Database update: ${{ steps.update.outputs.label }}"
+          body-path: ${{ runner.temp }}/CHANGES_DB.md
+          labels: database-update
+          add-paths: database/

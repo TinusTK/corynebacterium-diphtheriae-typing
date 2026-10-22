@@ -1,0 +1,5 @@
+BLAST+ >= 2.9 (blastn, makeblastdb)
+Python >= 3.8 (standard library only)
+# Database updater only:
+requests
+requests-oauthlib

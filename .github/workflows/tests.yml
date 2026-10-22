@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install BLAST+
+        run: sudo apt-get update && sudo apt-get install -y ncbi-blast+
+      - name: Unit tests (synthetic database)
+        run: python -m unittest discover -s tests -v
+      - name: Smoke test against bundled database
+        if: hashFiles('database/mlst/profiles.tsv') != ''
+        run: |
+          python tool/diphtheria_typing.py -i tool/test-data/no_loci.fasta \
+            -d database -o out.tsv
+          cat out.tsv
+          grep -q "tox not present" out.tsv

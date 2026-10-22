@@ -1,0 +1,74 @@
+{
+  "a_galaxy_workflow": "true",
+  "annotation": "Type a collection of C. diphtheriae assemblies: tox, tox allele, MLST ST.",
+  "format-version": "0.1",
+  "name": "Corynebacterium diphtheriae Typing",
+  "tags": [
+    "diphtheria",
+    "typing",
+    "MLST"
+  ],
+  "uuid": "2b798f75-4160-4bcc-86ce-b9359774320f",
+  "version": 1,
+  "steps": {
+    "0": {
+      "id": 0,
+      "type": "data_collection_input",
+      "label": "Assemblies",
+      "name": "Input dataset collection",
+      "annotation": "List collection of assembly FASTA files",
+      "inputs": [
+        {
+          "description": "",
+          "name": "Assemblies"
+        }
+      ],
+      "outputs": [],
+      "input_connections": {},
+      "position": {
+        "left": 0,
+        "top": 0
+      },
+      "tool_state": "{\"optional\": false, \"format\": [\"fasta\"], \"collection_type\": \"list\"}",
+      "tool_id": null,
+      "tool_version": null,
+      "uuid": "496d8704-0e5e-4541-b5aa-51092747c275",
+      "workflow_outputs": []
+    },
+    "1": {
+      "id": 1,
+      "type": "tool",
+      "label": "Typing",
+      "name": "C. diphtheriae typing",
+      "annotation": "",
+      "tool_id": "cdiphtheriae_typing",
+      "tool_version": "1.0.0+galaxy0",
+      "input_connections": {
+        "input": {
+          "id": 0,
+          "output_name": "output"
+        }
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "tabular"
+        }
+      ],
+      "position": {
+        "left": 300,
+        "top": 0
+      },
+      "tool_state": "{\"input\": {\"__class__\": \"ConnectedValue\"}, \"species\": \"Corynebacterium diphtheriae\", \"adv\": {\"tox_min_identity\": \"99\", \"tox_min_coverage\": \"95\", \"mlst_min_identity\": \"95\", \"mlst_min_coverage\": \"95\"}}",
+      "uuid": "6a965eb9-4cea-442a-bdd3-eb13e974a384",
+      "workflow_outputs": [
+        {
+          "label": "typing_report",
+          "output_name": "output",
+          "uuid": "8a691bf9-8c13-4b8b-a367-261a7608dbf2"
+        }
+      ]
+    }
+  }
+}
