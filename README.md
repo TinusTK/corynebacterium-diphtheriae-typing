@@ -60,22 +60,34 @@ docs/        validation record
 .github/     tests, twice-yearly database update, release
 ```
 
-## Getting started
+## Running without Galaxy
+
+The typing script is a normal command-line program; the Galaxy wrapper is just
+a thin layer on top. Both use the same code and the same database.
 
 ```bash
-# 1. BLAST+ and Python 3.8+
+# 1. Requirements: BLAST+ and Python 3.8+ (no other Python packages)
 sudo apt install ncbi-blast+          # or: conda install -c bioconda blast
 
-# 2. Populate the database (see Authentication below)
+# 2. Get the code and a database
+git clone https://github.com/TinusTK/galaxy-corynebacterium-diphtheriae-typing
+cd galaxy-corynebacterium-diphtheriae-typing
+#    either download a release tarball (database included), or build it:
 pip install requests requests-oauthlib
-python scripts/update_database.py --db database
+python scripts/update_database.py --db database   # see Authentication below
 
-# 3. Run
+# 3a. Run directly
 python tool/diphtheria_typing.py -d database -i CD001.fasta -i CD002.fasta -o results.tsv
 
-# 4. Tests
-python -m unittest discover -s tests -v
+# 3b. ...or install the `cdiph-typing` command
+pip install .
+cdiph-typing -d database -i assemblies/*.fasta -o results.tsv
 ```
+
+Batch a folder: `cdiph-typing -d database $(for f in assemblies/*.fasta; do echo -i $f; done) -o results.tsv`.
+Options: `cdiph-typing --help` (thresholds, threads, sample names, species label).
+
+Tests: `python -m unittest discover -s tests -v`
 
 ## Database updates
 
