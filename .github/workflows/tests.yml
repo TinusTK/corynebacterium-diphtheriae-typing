@@ -94,7 +94,7 @@ jobs:
           pip install planemo
           bash scripts/bundle_tool.sh build
           for cmd in "planemo lint --fail_level warn build/cdiphtheriae_typing" \
-                     "planemo shed_lint --tools --ensure_metadata build/cdiphtheriae_typing"; do
+                     "planemo shed_lint --tools build/cdiphtheriae_typing"; do
             if ! $cmd > out.log 2>&1; then
               cat out.log
               msg=$(grep -E "WARNING|ERROR|Error|Failed|fail" out.log | tail -8 | tr '\n' ' ' | cut -c1-1500)

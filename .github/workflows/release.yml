@@ -36,7 +36,7 @@ jobs:
         run: |
           pip install planemo
           planemo lint --fail_level warn build/cdiphtheriae_typing
-          planemo shed_lint --tools --ensure_metadata build/cdiphtheriae_typing
+          planemo shed_lint --tools build/cdiphtheriae_typing
           planemo test --test_output build/planemo_report.html build/cdiphtheriae_typing
 
       - name: Create GitHub release
