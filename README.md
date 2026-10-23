@@ -82,6 +82,31 @@ Per-locus notation (as in `tseemann/mlst`): `N` exact, `~N` novel allele
 
 ---
 
+## Software and data used
+
+### At runtime (typing)
+
+| Component | Used for | Version |
+|---|---|---|
+| [BLAST+](https://blast.ncbi.nlm.nih.gov/) (`makeblastdb`, `blastn`) | Builds a BLAST database from each assembly and searches every tox and MLST allele against it; identity and coverage come from these alignments | 2.16.0 in Galaxy (any ≥ 2.9 standalone) |
+| Python 3 | Runs `diphtheria_typing.py`: allele calling, ST lookup, tox rules, report. Standard library only, no extra packages | 3.12 in Galaxy (≥ 3.8 standalone) |
+| [BIGSdb-Pasteur](https://bigsdb.pasteur.fr/diphtheria/) *C. diphtheriae* species complex database | tox alleles, MLST alleles and ST profiles, bundled with each release | see `database/VERSION.txt` |
+
+**How it works:** each assembly is turned into a BLAST database, and all tox and
+MLST alleles are searched against it with `blastn` (e-value ≤ 1e-20, ≥ 80%
+identity, no low-complexity filtering). An exact call needs 100% identity across
+the full allele length with no gaps. Otherwise the best hit is reported with its
+identity and coverage, and the calling rules above apply.
+
+### For maintenance only (not needed to run the tool)
+
+| Component | Used for |
+|---|---|
+| BIGSdb REST API, with `requests` and `requests-oauthlib` | `scripts/update_database.py`: downloads database updates |
+| [Planemo](https://planemo.readthedocs.io/) | Lints and tests the Galaxy wrapper, and publishes to the Galaxy Tool Shed |
+| [NCBI Datasets API](https://www.ncbi.nlm.nih.gov/datasets/) | Downloads reference genomes for the validation workflow |
+| GitHub Actions | CI, twice-yearly database updates, validation and releases |
+
 ## Repository layout
 
 ```text
@@ -167,3 +192,5 @@ from the dataset / collection element names.
 - BIGSdb-Pasteur, Institut Pasteur — https://bigsdb.pasteur.fr/diphtheria/
 - Camacho C. *et al.* (2009) BLAST+: architecture and applications.
   *BMC Bioinformatics* 10:421.
+- Jolley K.A. & Maiden M.C.J. (2010) BIGSdb: Scalable analysis of bacterial
+  genome variation at the population level. *BMC Bioinformatics* 11:595.
