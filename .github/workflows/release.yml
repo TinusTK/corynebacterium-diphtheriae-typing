@@ -44,9 +44,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tar -czf "cdiphtheriae_typing-${GITHUB_REF_NAME}-${DBV}.tar.gz" -C build cdiphtheriae_typing
-          gh release create "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html \
-            --title "$GITHUB_REF_NAME (database $DBV)" \
-            --notes "Galaxy tool bundle with database **$DBV**. Tool tests passed (report attached)."
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            # Release was created on the GitHub website: attach the files to it
+            gh release upload "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html \
+              --title "$GITHUB_REF_NAME (database $DBV)" \
+              --notes "Galaxy tool bundle with database **$DBV**. Tool tests passed (report attached)."
+          fi
 
       - name: Publish to Galaxy Tool Shed
         env:
