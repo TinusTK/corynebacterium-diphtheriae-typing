@@ -1,0 +1,10 @@
+Sample	tox_gene	tox_allele	ST	mlst_profile	Identity	Coverage	db_version	notes
+241	tox not present	NA	175	atpA(2);dnaE(1);dnaK(37);fusA(19);leuA(24);odhA(3);rpoB(4)	0.0	0.0	Pasteur_2026-10	
+31A	tox	3	584	atpA(2);dnaE(2);dnaK(124);fusA(3);leuA(3);odhA(2);rpoB(3)	100.0	100.0	Pasteur_2026-10	
+C7beta	tox	2	26	atpA(8);dnaE(2);dnaK(16);fusA(1);leuA(3);odhA(3);rpoB(12)	100.0	100.0	Pasteur_2026-10	
+CDC-E8392	tox	4	50	atpA(2);dnaE(2);dnaK(4);fusA(1);leuA(3);odhA(3);rpoB(2)	100.0	100.0	Pasteur_2026-10	
+Cglutamicum_ATCC13032	tox not present	NA	NA	atpA(-);dnaE(-);dnaK(-);fusA(-);leuA(-);odhA(-);rpoB(-)	0.0	0.0	Pasteur_2026-10	no MLST loci found - check species/assembly
+HC01	tox not present	NA	175	atpA(2);dnaE(1);dnaK(37);fusA(19);leuA(24);odhA(3);rpoB(4)	0.0	0.0	Pasteur_2026-10	
+NCTC13129	tox	1	8	atpA(3);dnaE(5);dnaK(6);fusA(5);leuA(3);odhA(3);rpoB(6)	100.0	100.0	Pasteur_2026-10	
+PW8	tox	2	44	atpA(14);dnaE(2);dnaK(23);fusA(4);leuA(2);odhA(14);rpoB(2)	100.0	100.0	Pasteur_2026-10	
+VA01	tox not present	NA	80	atpA(2);dnaE(1);dnaK(32);fusA(19);leuA(13);odhA(3);rpoB(6)	0.0	0.0	Pasteur_2026-10	
