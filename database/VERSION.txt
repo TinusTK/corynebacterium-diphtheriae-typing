@@ -1,2 +1,1 @@
-# Database version label. Replaced by scripts/update_database.py.
-UNPOPULATED
+Pasteur_2026-10

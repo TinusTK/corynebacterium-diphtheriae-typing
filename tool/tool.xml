@@ -49,6 +49,17 @@ python '$__tool_directory__/diphtheria_typing.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- Synthetic assembly built from real Pasteur alleles: all seven
+             MLST loci at allele 1 (ST1) plus tox allele 1. -->
+        <test expect_num_outputs="1">
+            <param name="input" value="st1_tox1.fasta"/>
+            <output name="output">
+                <assert_contents>
+                    <has_n_columns n="9"/>
+                    <has_line_matching expression="^st1_tox1\ttox\t1\t1\tatpA\(1\);dnaE\(1\);dnaK\(1\);fusA\(1\);leuA\(1\);odhA\(1\);rpoB\(1\)\t100\.0\t100\.0\tPasteur_.*"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 **What it does**
