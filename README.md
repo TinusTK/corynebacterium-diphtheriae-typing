@@ -158,11 +158,6 @@ Install the bundled directory as a local tool, or use the release tarball.
 Inputs accept one or more FASTA datasets or a collection; sample names come
 from the dataset / collection element names.
 
-## Roadmap
-
-- **1.1** improved reporting, Galaxy visualisations
-- **1.2** cgMLST, novel allele reporting, additional QC metrics
-- **2.0** spuA, pbp and further virulence / resistance markers
 
 ## Citation
 
