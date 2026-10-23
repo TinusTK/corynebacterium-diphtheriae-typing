@@ -167,6 +167,11 @@ class TypingTests(unittest.TestCase):
         self.assertEqual(rows[0]["tox_gene"], "ERROR")
         self.assertEqual(rows[1]["ST"], "8")
 
+    def test_sample_name_extension_stripped(self):
+        a = self.genome("ext", ["1"] * 7)
+        rows = self.run_tool(a, extra_args=["-n", "CD009.contigs.fasta"])
+        self.assertEqual(rows[0]["Sample"], "CD009")
+
     def test_multiple_samples_with_names(self):
         a = self.genome("a", ["1"] * 7, tox=self.tox["1"])
         b = self.genome("b", ["2"] * 7)

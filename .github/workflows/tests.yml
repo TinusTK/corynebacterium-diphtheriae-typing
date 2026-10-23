@@ -60,7 +60,19 @@ jobs:
           bash scripts/bundle_tool.sh build
       - name: planemo test
         if: steps.db.outputs.ready == 'true'
-        run: planemo test --test_output build/planemo_report.html build/cdiphtheriae_typing
+        run: |
+          planemo test --test_output build/planemo_report.html \
+            --test_output_json build/planemo_report.json build/cdiphtheriae_typing || {
+            # Surface failure reasons as annotations (readable without log access)
+            python3 -c "
+          import json
+          for t in json.load(open('build/planemo_report.json')).get('tests', []):
+              d = t.get('data', {})
+              if d.get('status') != 'success':
+                  msg = ' | '.join(str(x) for x in (d.get('output_problems') or []) + [d.get('job', {}).get('stderr', '')] if x)
+                  print('::error title=' + t.get('id', 'test') + '::' + msg.replace(chr(10), ' ')[:1500])
+          " || true
+            exit 1; }
       - uses: actions/upload-artifact@v4
         if: always() && steps.db.outputs.ready == 'true'
         with:

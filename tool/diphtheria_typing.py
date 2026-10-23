@@ -135,6 +135,22 @@ def split_allele_id(seqid):
     return locus, allele
 
 
+FASTA_EXTS = (".fasta", ".fa", ".fna", ".fas", ".fsa", ".contigs", ".scaffolds")
+
+
+def clean_name(name):
+    """'CD001.fasta' -> 'CD001'; also drops .gz and repeated extensions."""
+    base = name.strip()
+    changed = True
+    while changed:
+        changed = False
+        for ext in (".gz",) + FASTA_EXTS:
+            if base.lower().endswith(ext) and len(base) > len(ext):
+                base = base[:-len(ext)]
+                changed = True
+    return base or name
+
+
 def run(cmd):
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True)
@@ -369,8 +385,8 @@ def main(argv=None):
         if shutil.which(exe) is None:
             sys.exit(f"ERROR: {exe} not found on PATH (install BLAST+)")
     db = TypingDB(args.db)
-    names = args.name or [os.path.splitext(os.path.basename(f))[0]
-                          for f in args.input]
+    names = [clean_name(n) for n in
+             (args.name or [os.path.basename(f) for f in args.input])]
 
     qdir = tempfile.mkdtemp(prefix="diphtyp_q_", dir=args.tmpdir)
     try:
