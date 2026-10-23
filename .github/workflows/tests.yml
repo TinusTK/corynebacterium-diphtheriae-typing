@@ -78,3 +78,29 @@ jobs:
         with:
           name: planemo-report
           path: build/planemo_report.html
+
+  release-checks:
+    name: Release checks (Tool Shed lint)
+    runs-on: ubuntu-latest
+    needs: [planemo-lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Bundle and shed_lint
+        run: |
+          [ -f database/mlst/profiles.tsv ] || { echo "::notice::no database yet"; exit 0; }
+          pip install planemo
+          bash scripts/bundle_tool.sh build
+          for cmd in "planemo lint --fail_level warn build/cdiphtheriae_typing" \
+                     "planemo shed_lint --tools --ensure_metadata build/cdiphtheriae_typing"; do
+            if ! $cmd > out.log 2>&1; then
+              cat out.log
+              msg=$(grep -E "WARNING|ERROR|Error|Failed|fail" out.log | tail -8 | tr '\n' ' ' | cut -c1-1500)
+              [ -z "$msg" ] && msg=$(tail -8 out.log | tr '\n' ' ' | cut -c1-1500)
+              echo "::error title=$(echo $cmd | cut -d' ' -f1-2)::$msg"
+              exit 1
+            fi
+            cat out.log
+          done
