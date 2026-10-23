@@ -1,0 +1,27 @@
+name: Update Tool Shed page details
+
+# Pushes the description, homepage and categories from .shed.yml to the
+# Galaxy Tool Shed WITHOUT uploading a new version. Run from the Actions tab.
+on:
+  workflow_dispatch:
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Update metadata
+        env:
+          TOOLSHED_API_KEY: ${{ secrets.TOOLSHED_API_KEY }}
+        run: |
+          [ -n "$TOOLSHED_API_KEY" ] || { echo "::error::TOOLSHED_API_KEY secret not set"; exit 1; }
+          pip install planemo
+          bash scripts/bundle_tool.sh build
+          planemo shed_update build/cdiphtheriae_typing \
+            --shed_target toolshed \
+            --shed_key "$TOOLSHED_API_KEY" \
+            --skip_upload
+          echo "::notice::Tool Shed page details updated from .shed.yml"
