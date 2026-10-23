@@ -24,45 +24,56 @@ jobs:
       - name: Download reference genomes from NCBI
         run: |
           mkdir -p genomes
-          tail -n +2 validation/expected.tsv | while IFS=$'\t' read -r sample acc st tox; do
+          tail -n +2 validation/expected.tsv | while IFS=$'\t' read -r sample acc st tox src; do
             [ -z "$acc" ] && continue
-            curl -fsSL --retry 4 -o "$acc.zip" \
-              "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$acc/download?include_annotation_type=GENOME_FASTA"
-            unzip -qo "$acc.zip" -d "dl_$acc"
-            cat dl_$acc/ncbi_dataset/data/$acc/*.fna > "genomes/$sample.fasta"
-            echo "$sample ($acc): $(grep -c '>' genomes/$sample.fasta) sequences, $(grep -v '>' genomes/$sample.fasta | tr -d '\n' | wc -c) bp"
+            case "$acc" in
+              GCF_*|GCA_*)
+                curl -fsSL --retry 4 -o "$acc.zip" \
+                  "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$acc/download?include_annotation_type=GENOME_FASTA"
+                unzip -qo "$acc.zip" -d "dl_$acc"
+                cat dl_$acc/ncbi_dataset/data/$acc/*.fna > "genomes/$sample.fasta" ;;
+              *)  # GenBank nucleotide accession (complete chromosome)
+                curl -fsSL --retry 4 -o "genomes/$sample.fasta" \
+                  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$acc&rettype=fasta&retmode=text"
+                sleep 1 ;;
+            esac
+            hdr=$(head -1 "genomes/$sample.fasta" | cut -c2-90)
+            bp=$(grep -v '>' "genomes/$sample.fasta" | tr -d '\n' | wc -c)
+            echo "::notice title=Downloaded $sample::$acc - $(grep -c '>' genomes/$sample.fasta) seq, $bp bp - $hdr"
           done
 
       - name: Type and compare with expected
         run: |
           args=""
           for f in genomes/*.fasta; do args="$args -i $f"; done
-          python tool/diphtheria_typing.py -d database $args -t 2 -o validation_results.tsv
-          cat validation_results.tsv
-          python3 - <<'EOF'
+          python tool/diphtheria_typing.py -d database $args -t 2 -o validation_results.tabular
+          cat validation_results.tabular
+          # Full results table as base64, so it can be retrieved from the annotations
+          echo "::notice title=RESULTS_TABULAR_B64::$(base64 -w0 validation_results.tabular)"
+          python3 - <<'PY'
           import csv, sys
           exp = {r["sample"]: r for r in csv.DictReader(open("validation/expected.tsv"), delimiter="\t")}
-          got = {r["Sample"]: r for r in csv.DictReader(open("validation_results.tsv"), delimiter="\t")}
+          got = {r["Sample"]: r for r in csv.DictReader(open("validation_results.tabular"), delimiter="\t")}
           fail = 0
           for s, e in exp.items():
               g = got.get(s)
               if g is None:
                   print(f"::error title={s}::no result"); fail += 1; continue
               tox_ok = (g["tox_gene"] in ("tox", "novel tox allele")) == (e["tox"] == "positive")
-              st_ok = g["ST"] == e["expected_ST"]
-              summary = (f"{s} ({e['accession']}): ST {g['ST']} (expected {e['expected_ST']}), "
-                         f"tox_gene={g['tox_gene']} allele={g['tox_allele']} "
-                         f"id={g['Identity']} cov={g['Coverage']} db={g['db_version']} "
-                         f"profile={g['mlst_profile']} notes={g['notes'] or '-'}")
+              st_checked = e["expected_ST"] != "-"
+              st_ok = (not st_checked) or g["ST"] == e["expected_ST"]
+              st_txt = f"ST {g['ST']}" + (f" (expected {e['expected_ST']})" if st_checked else " (not independently published - recorded only)")
+              summary = (f"{s}: {st_txt}, tox_gene={g['tox_gene']} allele={g['tox_allele']} "
+                         f"id={g['Identity']} cov={g['Coverage']} profile={g['mlst_profile']} notes={g['notes'] or '-'}")
               if tox_ok and st_ok:
                   print(f"::notice title=PASS {s}::{summary}")
               else:
                   print(f"::error title=FAIL {s}::{summary}"); fail += 1
           sys.exit(1 if fail else 0)
-          EOF
+          PY
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: validation-results
-          path: validation_results.tsv
+          path: validation_results.tabular
