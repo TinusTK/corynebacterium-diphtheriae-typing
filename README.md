@@ -129,8 +129,8 @@ a thin layer on top. Both use the same code and the same database.
 sudo apt install ncbi-blast+          # or: conda install -c bioconda blast
 
 # 2. Get the code and a database
-git clone https://github.com/TinusTK/galaxy-corynebacterium-diphtheriae-typing
-cd galaxy-corynebacterium-diphtheriae-typing
+git clone https://github.com/TinusTK/corynebacterium-diphtheriae-typing
+cd corynebacterium-diphtheriae-typing
 #    either download a release tarball (database included), or build it:
 pip install requests requests-oauthlib
 python scripts/update_database.py --db database   # see Authentication below
@@ -156,7 +156,16 @@ alleles and profiles, compares them with `database/`, runs the tests and opens
 a **pull request** with a change table and reviewer checklist. Nothing is
 deployed automatically.
 
-After review and merge, tag a release (`git tag v1.1 && git push --tags`, or
+**Before each release, bump the tool version** in `tool/tool.xml`. The Tool
+Shed rejects a version that's already published:
+
+- database update or wrapper change only → raise the suffix:
+  `1.0.0+galaxy0` → `1.0.0+galaxy1`
+- change to `diphtheria_typing.py` → raise `@TOOL_VERSION@` (also in
+  `pyproject.toml` and `__version__`) and reset the suffix: `1.1.0+galaxy0`
+
+CI shows a warning on every push until the version is bumped. After review and
+merge, tag a release (`git tag v1.1 && git push --tags`, or
 *Releases → Draft a new release* on GitHub). `release.yml` then bundles the
 tool with the database, runs the Galaxy tool tests, creates a GitHub release,
 and publishes the new revision to the Galaxy Tool Shed.

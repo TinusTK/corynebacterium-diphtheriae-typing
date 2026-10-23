@@ -97,6 +97,13 @@ jobs:
                      "planemo shed_lint --tools build/cdiphtheriae_typing"; do
             if ! $cmd > out.log 2>&1; then
               cat out.log
+              # The only error is "version already published": expected between
+              # releases. Warn here; release.yml still enforces it at release time.
+              if grep -q "ERROR (ShedVersion)" out.log && \
+                 [ "$(grep -c 'ERROR' out.log)" = "$(grep -c 'ERROR (ShedVersion)' out.log)" ]; then
+                echo "::warning title=Version already on Tool Shed::Bump the version in tool/tool.xml before the next release (see README, Releasing)."
+                continue
+              fi
               msg=$(grep -E "WARNING|ERROR|Error|Failed|fail" out.log | tail -8 | tr '\n' ' ' | cut -c1-1500)
               [ -z "$msg" ] && msg=$(tail -8 out.log | tr '\n' ' ' | cut -c1-1500)
               echo "::error title=$(echo $cmd | cut -d' ' -f1-2)::$msg"
