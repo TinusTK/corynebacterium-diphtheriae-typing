@@ -107,6 +107,15 @@ identity and coverage, and the calling rules above apply.
 | [NCBI Datasets API](https://www.ncbi.nlm.nih.gov/datasets/) | Downloads reference genomes for the validation workflow |
 | GitHub Actions | CI, twice-yearly database updates, validation and releases |
 
+## Validation
+
+Validated against nine public genomes: tox status correct for 9/9 (five
+tox-positive, three tox-negative, one non-*diphtheriae* negative control), with
+exact allele matches, and ST correct for both strains with an independently
+published ST (NCTC 13129 ST8, C7(β) ST26). Validation re-runs automatically on
+every database update. Results, method, limitations and references:
+[validation/VALIDATION.md](validation/VALIDATION.md).
+
 ## Repository layout
 
 ```text
@@ -115,8 +124,8 @@ database/    VERSION.txt, tox/, mlst/  (populated by the updater, kept out of co
 scripts/     update_database.py, bundle_tool.sh
 tests/       unit tests (synthetic database - logic only)
 workflows/   Galaxy workflow (.ga)
-docs/        validation record
-.github/     tests, twice-yearly database update, release
+validation/  validation record (VALIDATION.md), expected results, output file
+.github/     tests, validation, twice-yearly database update, release
 ```
 
 ## Running without Galaxy

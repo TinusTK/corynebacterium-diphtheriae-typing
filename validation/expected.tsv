@@ -1,10 +1,10 @@
 sample	accession	expected_ST	tox	source
-NCTC13129	GCF_000195815.1	8	positive	ST8 and tox+: Guglielmini et al. 2021 J Clin Microbiol (doi:10.1128/JCM.01581-21); Cerdeno-Tarraga et al. 2003
-C7beta	CP003210	26	positive	tox+: Trost et al. 2012 J Bacteriol (doi:10.1128/JB.00183-12); ST26: Choudhury et al. J Clin Diagn Res
-PW8	CP003216	-	positive	tox+: Trost et al. 2012
-CDC-E8392	CP003211	-	positive	tox+: Trost et al. 2012
-31A	CP003206	-	positive	tox+: Trost et al. 2012
-241	CP003207	-	negative	tox-negative: Trost et al. 2012
-VA01	CP003217	-	negative	tox-negative: Trost et al. 2012
-HC01	CP003212	-	negative	tox-negative: Trost et al. 2012
-Cglutamicum_ATCC13032	GCF_000011325.1	NA	negative	Negative control: C. glutamicum (non-pathogenic, outside the C. diphtheriae MLST scheme)
+NCTC13129	GCF_000195815.1	8	positive	[1] ST8, tox+; [3] genome
+C7beta	CP003210	26	positive	[2] tox+, genome; [4] ST26
+PW8	CP003216	-	positive	[2] tox+, genome
+CDC-E8392	CP003211	-	positive	[2] tox+, genome
+31A	CP003206	-	positive	[2] tox+, genome
+241	CP003207	-	negative	[2] tox-negative, genome
+VA01	CP003217	-	negative	[2] tox-negative, genome
+HC01	CP003212	-	negative	[2] tox-negative, genome
+Cglutamicum_ATCC13032	GCF_000011325.1	NA	negative	[5] genome; negative control (non-pathogenic, outside the C. diphtheriae MLST scheme)
