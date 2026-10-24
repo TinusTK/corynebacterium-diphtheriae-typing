@@ -21,26 +21,20 @@ jobs:
       - name: Install BLAST+
         run: sudo apt-get update && sudo apt-get install -y ncbi-blast+ unzip
 
-      - name: Download reference genomes from NCBI
+      - name: Get genomes (stored copies, NCBI for any missing)
         run: |
           mkdir -p genomes
-          tail -n +2 validation/expected.tsv | while IFS=$'\t' read -r sample acc st tox src; do
-            [ -z "$acc" ] && continue
-            case "$acc" in
-              GCF_*|GCA_*)
-                curl -fsSL --retry 4 -o "$acc.zip" \
-                  "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$acc/download?include_annotation_type=GENOME_FASTA"
-                unzip -qo "$acc.zip" -d "dl_$acc"
-                cat dl_$acc/ncbi_dataset/data/$acc/*.fna > "genomes/$sample.fasta" ;;
-              *)  # GenBank nucleotide accession (complete chromosome)
-                curl -fsSL --retry 4 -o "genomes/$sample.fasta" \
-                  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$acc&rettype=fasta&retmode=text"
-                sleep 1 ;;
-            esac
-            hdr=$(head -1 "genomes/$sample.fasta" | cut -c2-90)
-            bp=$(grep -v '>' "genomes/$sample.fasta" | tr -d '\n' | wc -c)
-            echo "::notice title=Downloaded $sample::$acc - $(grep -c '>' genomes/$sample.fasta) seq, $bp bp - $hdr"
-          done
+          cp validation/genomes/*.fasta.gz genomes/ 2>/dev/null || true
+          bash scripts/fetch_validation_genomes.sh genomes
+          # Stored copies must match the manifest checksums
+          if [ -f validation/genomes/MANIFEST.tsv ]; then
+            tail -n +2 validation/genomes/MANIFEST.tsv | while IFS=$'\t' read -r f acc n bp sha desc; do
+              got=$(gzip -dc "genomes/$f" | sha256sum | cut -d' ' -f1)
+              [ "$got" = "$sha" ] || { echo "::error title=Checksum mismatch::$f"; exit 1; }
+            done
+          fi
+          for f in genomes/*.fasta.gz; do gunzip -f "$f"; done
+          ls -la genomes
 
       - name: Type and compare with expected
         run: |

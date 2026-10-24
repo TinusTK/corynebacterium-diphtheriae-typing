@@ -1,0 +1,32 @@
+name: Fetch validation genomes
+
+# Downloads the genomes in validation/expected.tsv from NCBI and commits them to
+# validation/genomes/. Runs when expected.tsv changes, or from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "validation/expected.tsv"
+      - ".github/workflows/fetch_validation_genomes.yml"
+      - "scripts/fetch_validation_genomes.sh"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download genomes
+        run: bash scripts/fetch_validation_genomes.sh validation/genomes
+      - name: Commit new genomes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add validation/genomes
+          if git diff --cached --quiet; then echo "No new genomes"; exit 0; fi
+          git commit -m "Add validation genome FASTA files from NCBI"
+          git push
+          echo "::notice title=Genomes committed::$(ls validation/genomes/*.fasta.gz | wc -l) genomes in validation/genomes/"
