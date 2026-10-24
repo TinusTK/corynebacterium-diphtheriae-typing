@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install unzip
+        run: command -v unzip || (sudo apt-get update && sudo apt-get install -y unzip)
       - name: Download genomes
         run: bash scripts/fetch_validation_genomes.sh validation/genomes
       - name: Commit new genomes

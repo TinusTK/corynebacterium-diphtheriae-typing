@@ -4,6 +4,7 @@
 # <outdir>/MANIFEST.tsv.
 #   bash scripts/fetch_validation_genomes.sh [outdir]
 set -euo pipefail
+trap 'echo "::error title=fetch_validation_genomes.sh::line $LINENO: $BASH_COMMAND" >&2' ERR
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$ROOT/validation/genomes}"
 mkdir -p "$OUT"
