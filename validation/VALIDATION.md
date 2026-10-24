@@ -18,6 +18,7 @@ logic. This record is the real-genome evidence.
 | `VALIDATION.md` | This record: method, results, references |
 | [`expected.tsv`](expected.tsv) | Genomes, accessions, expected ST and tox status, with reference numbers |
 | [`validation_Pasteur_2026-10.tabular`](validation_Pasteur_2026-10.tabular) | Full tool output for all genomes below (Galaxy tabular format) |
+| [`genomes/`](genomes/) | The nine genome FASTA files used (gzipped, from NCBI), with [`MANIFEST.tsv`](genomes/MANIFEST.tsv) listing accession, length and SHA-256 checksum |
 
 ## Results: database Pasteur_2026-10, tool v1.0 (2026-10-23)
 
@@ -63,6 +64,9 @@ All tox hits were exact (100% identity, 100% coverage), with no QC flags.
 
 1. Genomes were downloaded from NCBI: RefSeq assemblies through the NCBI Datasets
    API [8], GenBank complete chromosomes through NCBI E-utilities [9].
+   Copies are stored in `genomes/`, and the workflow checks them against the
+   manifest checksums before typing, so validation does not depend on NCBI being
+   available. Re-typing the stored files reproduces the output file exactly.
 2. Each genome was typed with `diphtheria_typing.py` (v1.0.0) against the bundled
    BIGSdb-Pasteur database [6, 7], version `Pasteur_2026-10`, using BLAST+ [10]
    with the default thresholds (tox: ≥ 99% identity, ≥ 95% coverage; MLST exact match).
