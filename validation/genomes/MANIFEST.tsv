@@ -1,0 +1,10 @@
+file	accession	sequences	length_bp	sha256_uncompressed	description
+NCTC13129.fasta.gz	GCF_000195815.1	1	2488635	6f7b31b488ff8a734c0d7cf563adb0695b132bb4cf77db574d189858773bef36	NC_002935.2 Corynebacterium diphtheriae NCTC 13129, complete sequence
+C7beta.fasta.gz	CP003210	1	2499189	46e4caa8c4fccb321d2ab232c1e053126342408ed7082fb0628063a59d9b94fa	CP003210.1 Corynebacterium diphtheriae C7 (beta), complete genome
+PW8.fasta.gz	CP003216	1	2530683	dba3a964bac3e7c0eb363605665d33555db8a178345099f385d963863ca5d81e	CP003216.1 Corynebacterium diphtheriae PW8, complete genome
+CDC-E8392.fasta.gz	CP003211	1	2433326	88654ce737f8600d1b28ebbdf5b7028032940dcc01fe700bdf0b2aebe6984923	CP003211.1 Corynebacterium diphtheriae CDCE 8392, complete genome
+31A.fasta.gz	CP003206	1	2535346	62be1090911fb0b8df3a334f0a3c8f8df2ed2ce41c19776fad148e77ce5f6033	CP003206.1 Corynebacterium diphtheriae 31A, complete genome
+241.fasta.gz	CP003207	1	2426551	9fec9e2dd3f17ff776dfe307da3264059e52d61c187cbc90abddebcbac3de8eb	CP003207.1 Corynebacterium diphtheriae 241, complete genome
+VA01.fasta.gz	CP003217	1	2395441	357113fb31b8a77dc6388c0d75a1277b534994af65c5b64d2fbb27d4b2a56352	CP003217.1 Corynebacterium diphtheriae VA01, complete genome
+HC01.fasta.gz	CP003212	1	2427149	21173fd9a4b2472fb4c924acd76f1a6b7b8bd7a7964b222ab6e1b2d99aa8aa4b	CP003212.1 Corynebacterium diphtheriae HC01, complete genome
+Cglutamicum_ATCC13032.fasta.gz	GCF_000011325.1	1	3309401	77a96e75167d6e750d09f40616bb14a682e30b625e0f8f51fafe7c634deff636	NC_003450.3 Corynebacterium glutamicum ATCC 13032, complete sequence
