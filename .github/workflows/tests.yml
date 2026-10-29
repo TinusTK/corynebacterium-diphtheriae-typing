@@ -34,8 +34,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install planemo
+      # Lint the bundle, not tool/: <required_files> lists database/*, which
+      # only sits next to tool.xml in the bundle (lint errors on no match).
       - name: planemo lint
-        run: planemo lint --fail_level warn tool/
+        run: |
+          bash scripts/bundle_tool.sh build
+          planemo lint --fail_level warn build/cdiphtheriae_typing
 
   planemo-test:
     name: Galaxy tool test
