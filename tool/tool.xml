@@ -1,4 +1,4 @@
-<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy1" profile="22.05">
+<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy2" profile="22.05">
     <description>tox detection, tox allele and MLST from assemblies</description>
     <macros>
         <token name="@TOOL_VERSION@">1.0.0</token>

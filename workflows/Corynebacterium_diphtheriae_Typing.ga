@@ -42,7 +42,7 @@
       "name": "C. diphtheriae typing",
       "annotation": "",
       "tool_id": "cdiphtheriae_typing",
-      "tool_version": "1.0.0+galaxy1",
+      "tool_version": "1.0.0+galaxy2",
       "input_connections": {
         "input": {
           "id": 0,
