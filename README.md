@@ -182,6 +182,8 @@ and publishes the new revision to the Galaxy Tool Shed.
 | Release | Database |
 |---|---|
 | v1.0 | Pasteur_2026-10 |
+| v1.0-galaxy1 | Pasteur_2026-10 |
+| v1.0-galaxy2 | Pasteur_2026-10b (first authenticated download) |
 | v1.1 | Pasteur_2027-04 |
 | v1.2 | Pasteur_2027-10 |
 

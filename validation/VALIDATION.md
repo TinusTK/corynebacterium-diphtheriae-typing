@@ -18,6 +18,7 @@ logic. This record is the real-genome evidence.
 | `VALIDATION.md` | This record: method, results, references |
 | [`expected.tsv`](expected.tsv) | Genomes, accessions, expected ST and tox status, with reference numbers |
 | [`validation_Pasteur_2026-10.tabular`](validation_Pasteur_2026-10.tabular) | Full tool output for all genomes below (Galaxy tabular format) |
+| [`validation_Pasteur_2026-10b.tabular`](validation_Pasteur_2026-10b.tabular) | The same genomes re-run against database Pasteur_2026-10b |
 | [`genomes/`](genomes/) | The nine genome FASTA files used (gzipped, from NCBI), with [`MANIFEST.tsv`](genomes/MANIFEST.tsv) listing accession, length and SHA-256 checksum |
 
 ## Results: database Pasteur_2026-10, tool v1.0 (2026-10-23)
@@ -35,6 +36,12 @@ logic. This record is the real-genome evidence.
 | *C. glutamicum* ATCC 13032 (negative control) | GCF_000011325.1 [5] | negative | not present | none | NA, no MLST loci | ✅ |
 
 All tox hits were exact (100% identity, 100% coverage), with no QC flags.
+
+**Re-run with database Pasteur_2026-10b (2026-10-30):** the first database
+downloaded with a BIGSdb-Pasteur API key, so it includes data curated since
+2025 (+16 tox alleles, +184 MLST alleles, +286 STs; nothing removed or
+changed). All nine results are identical to the table above in every column
+except `db_version`.
 
 ### Summary
 
