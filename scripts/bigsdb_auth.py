@@ -38,11 +38,14 @@ def main():
     except ImportError:
         sys.exit("Install first: pip install requests requests-oauthlib")
 
-    key = input("Consumer key: ").strip()
-    secret = getpass.getpass("Consumer secret (hidden): ").strip()
+    key = input("Consumer key (client id): ").strip()
+    secret = getpass.getpass("Consumer secret (client secret, hidden): ").strip()
 
+    # BIGSdb reads the OAuth fields from the query string, not the
+    # Authorization header ("No consumer key submitted" otherwise).
     # 1. request token
-    s = OAuth1Session(key, client_secret=secret, callback_uri="oob")
+    s = OAuth1Session(key, client_secret=secret, callback_uri="oob",
+                      signature_type="QUERY")
     r = s.get(f"{args.api}/oauth/get_request_token", timeout=60)
     if r.status_code != 200:
         sys.exit(f"Request token failed ({r.status_code}): {r.text[:300]}\n"
@@ -59,7 +62,7 @@ def main():
     s = OAuth1Session(key, client_secret=secret,
                       resource_owner_key=req["oauth_token"],
                       resource_owner_secret=req["oauth_token_secret"],
-                      verifier=verifier)
+                      verifier=verifier, signature_type="QUERY")
     r = s.get(f"{args.api}/oauth/get_access_token", timeout=60)
     if r.status_code != 200:
         sys.exit(f"Access token failed ({r.status_code}): {r.text[:300]}\n"
@@ -69,7 +72,8 @@ def main():
     # 4. sanity check: can we get a session token?
     s = OAuth1Session(key, client_secret=secret,
                       resource_owner_key=acc["oauth_token"],
-                      resource_owner_secret=acc["oauth_token_secret"])
+                      resource_owner_secret=acc["oauth_token_secret"],
+                      signature_type="QUERY")
     ok = s.get(f"{args.api}/oauth/get_session_token", timeout=60).status_code == 200
 
     print("\nSuccess." if ok else "\nGot an access token, but the session-token "

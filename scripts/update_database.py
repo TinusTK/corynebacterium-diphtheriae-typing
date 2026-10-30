@@ -60,9 +60,11 @@ class Client:
             from requests_oauthlib import OAuth1Session
             # Access tokens are long-lived but only grant session tokens;
             # API resources need a session token (valid ~12 h).
+            # BIGSdb reads OAuth fields from the query string, not the header.
             acc = OAuth1Session(keys[0], client_secret=keys[1],
                                 resource_owner_key=keys[2],
-                                resource_owner_secret=keys[3])
+                                resource_owner_secret=keys[3],
+                                signature_type="QUERY")
             r = acc.get(f"{self.base}/oauth/get_session_token", timeout=60)
             if r.status_code != 200:
                 raise RuntimeError(
@@ -71,7 +73,8 @@ class Client:
             tok = r.json()
             self.session = OAuth1Session(keys[0], client_secret=keys[1],
                                          resource_owner_key=tok["oauth_token"],
-                                         resource_owner_secret=tok["oauth_token_secret"])
+                                         resource_owner_secret=tok["oauth_token_secret"],
+                                         signature_type="QUERY")
             print("Authenticated to BIGSdb-Pasteur (session token obtained)",
                   file=sys.stderr)
 
