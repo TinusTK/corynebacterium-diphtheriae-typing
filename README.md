@@ -1,6 +1,7 @@
-# Galaxy *Corynebacterium diphtheriae* Typing Tool
+# *Corynebacterium diphtheriae* Typing Tool
 
-Rapid typing of *C. diphtheriae* genome assemblies for Galaxy Australia:
+I built this tool for public health use, to provide rapid typing of
+*Corynebacterium diphtheriae* genome assemblies:
 
 - **tox** gene detection and **tox allele** assignment
 - **7-gene MLST** sequence type (ST)
@@ -15,6 +16,8 @@ refreshed twice yearly through a reviewed pull request.
 > laboratory procedure.
 
 ---
+
+Available on Galaxy Australia.
 
 ## Output
 
@@ -84,8 +87,6 @@ Per-locus notation (as in `tseemann/mlst`): `N` exact, `~N` novel allele
 
 ## Software and data used
 
-### At runtime (typing)
-
 | Component | Used for | Version |
 |---|---|---|
 | [BLAST+](https://blast.ncbi.nlm.nih.gov/) (`makeblastdb`, `blastn`) | Builds a BLAST database from each assembly and searches every tox and MLST allele against it; identity and coverage come from these alignments | 2.16.0 in Galaxy (any ≥ 2.9 standalone) |
@@ -98,15 +99,6 @@ identity, no low-complexity filtering). An exact call needs 100% identity across
 the full allele length with no gaps. Otherwise the best hit is reported with its
 identity and coverage, and the calling rules above apply.
 
-### For maintenance only (not needed to run the tool)
-
-| Component | Used for |
-|---|---|
-| BIGSdb REST API, with `requests` and `requests-oauthlib` | `scripts/update_database.py`: downloads database updates |
-| [Planemo](https://planemo.readthedocs.io/) | Lints and tests the Galaxy wrapper, and publishes to the Galaxy Tool Shed |
-| [NCBI Datasets API](https://www.ncbi.nlm.nih.gov/datasets/) | Downloads reference genomes for the validation workflow |
-| GitHub Actions | CI, twice-yearly database updates, validation and releases |
-
 ## Validation
 
 Validated against nine public genomes: tox status correct for 9/9 (five
@@ -115,18 +107,6 @@ exact allele matches, and ST correct for both strains with an independently
 published ST (NCTC 13129 ST8, C7(β) ST26). Validation re-runs automatically on
 every database update. Results, method, limitations and references:
 [validation/VALIDATION.md](validation/VALIDATION.md).
-
-## Repository layout
-
-```text
-tool/        Galaxy wrapper (tool.xml) + diphtheria_typing.py + test-data
-database/    VERSION.txt, tox/, mlst/  (populated by the updater, kept out of code)
-scripts/     update_database.py, bundle_tool.sh
-tests/       unit tests (synthetic database - logic only)
-workflows/   Galaxy workflow (.ga)
-validation/  validation record (VALIDATION.md), expected results, output file
-.github/     tests, validation, twice-yearly database update, release
-```
 
 ## Running without Galaxy
 
@@ -193,17 +173,6 @@ Since 1 January 2025 BIGSdb-Pasteur only serves data curated after that date to
 authenticated API users. Without credentials the updater still works but
 **newer alleles and STs will be missing**, and the PR says so in bold.
 
-### Local Galaxy install
-
-```bash
-bash scripts/bundle_tool.sh            # -> build/cdiphtheriae_typing/
-```
-
-Install the bundled directory as a local tool, or use the release tarball.
-Inputs accept one or more FASTA datasets or a collection; sample names come
-from the dataset / collection element names.
-
-
 ## Citation
 
 - Bolt F. *et al.* (2010) Multilocus sequence typing identifies evidence for
@@ -214,3 +183,5 @@ from the dataset / collection element names.
   *BMC Bioinformatics* 10:421.
 - Jolley K.A. & Maiden M.C.J. (2010) BIGSdb: Scalable analysis of bacterial
   genome variation at the population level. *BMC Bioinformatics* 11:595.
+- TinusTK. *Corynebacterium diphtheriae* Typing Tool. GitHub —
+  https://github.com/TinusTK/corynebacterium-diphtheriae-typing
