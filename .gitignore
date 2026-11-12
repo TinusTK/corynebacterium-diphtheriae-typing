@@ -3,3 +3,9 @@ __pycache__/
 build/
 *.tar.gz
 out.tsv
+
+# MasterMind Board offline copy (private)
+/CdiphtheriaeTypingtasks.md
+
+# macOS folder settings
+.DS_Store
