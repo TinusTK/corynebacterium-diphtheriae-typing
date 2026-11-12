@@ -42,7 +42,7 @@
       "name": "C. diphtheriae typing",
       "annotation": "",
       "tool_id": "cdiphtheriae_typing",
-      "tool_version": "1.0.0+galaxy2",
+      "tool_version": "1.1.0+galaxy0",
       "input_connections": {
         "input": {
           "id": 0,
@@ -60,7 +60,7 @@
         "left": 300,
         "top": 0
       },
-      "tool_state": "{\"input\": {\"__class__\": \"ConnectedValue\"}, \"adv\": {\"tox_min_identity\": \"99\", \"tox_min_coverage\": \"95\", \"mlst_min_identity\": \"95\", \"mlst_min_coverage\": \"95\"}}",
+      "tool_state": "{\"input\": {\"__class__\": \"ConnectedValue\"}, \"adv\": {\"tox_min_identity\": \"99\", \"tox_min_coverage\": \"95\", \"mlst_min_identity\": \"95\", \"mlst_min_coverage\": \"95\"}, \"allele_layout\": \"combined\"}",
       "uuid": "6a965eb9-4cea-442a-bdd3-eb13e974a384",
       "workflow_outputs": [
         {

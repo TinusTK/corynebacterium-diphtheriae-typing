@@ -25,12 +25,26 @@ import sys
 import tempfile
 from collections import defaultdict
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 OUTPUT_COLUMNS = [
     "Sample", "tox_gene", "tox_allele", "ST", "mlst_profile",
     "Identity", "Coverage", "db_version", "notes",
 ]
+
+
+def output_columns(loci, layout="combined"):
+    """Column order for the chosen allele layout.
+
+    combined: one mlst_profile column (atpA(1);dnaE(1);...), the default.
+    separate: one column per locus, ALLELE1..ALLELEn (n = number of loci,
+    7 for this scheme), each holding one call such as atpA(1).
+    """
+    if layout != "separate":
+        return list(OUTPUT_COLUMNS)
+    i = OUTPUT_COLUMNS.index("mlst_profile")
+    alleles = [f"ALLELE{k + 1}" for k in range(len(loci))]
+    return OUTPUT_COLUMNS[:i] + alleles + OUTPUT_COLUMNS[i + 1:]
 
 BLAST_FIELDS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
                 "qstart", "qend", "sstart", "send", "evalue", "bitscore",
@@ -322,6 +336,8 @@ def type_sample(name, assembly, db, query_fasta, args):
             notes.append(f"{locus}: {note}")
     row["ST"] = call_st(db, calls)
     row["mlst_profile"] = ";".join(f"{l}({c})" for l, c in zip(db.loci, calls))
+    for k, (l, c) in enumerate(zip(db.loci, calls)):
+        row[f"ALLELE{k + 1}"] = f"{l}({c})"
     if row["ST"] == "novel":
         notes.append("exact alleles at all loci but profile not in database")
     elif row["ST"] == "NA":
@@ -370,6 +386,11 @@ def parse_args(argv=None):
     p.add_argument("--tox-min-coverage", type=float, default=95.0)
     p.add_argument("--mlst-min-identity", type=float, default=95.0)
     p.add_argument("--mlst-min-coverage", type=float, default=95.0)
+    p.add_argument("--allele-layout", choices=["combined", "separate"],
+                   default="combined",
+                   help="combined (default): all MLST calls in one "
+                        "mlst_profile column; separate: one column per "
+                        "locus, ALLELE1..ALLELE7")
     p.add_argument("-t", "--threads", type=int, default=1)
     p.add_argument("--tmpdir", default=None)
     p.add_argument("--version", action="version", version=__version__)
@@ -398,8 +419,10 @@ def main(argv=None):
 
     out = sys.stdout if args.output == "-" else open(args.output, "w", newline="")
     try:
-        w = csv.DictWriter(out, fieldnames=OUTPUT_COLUMNS, delimiter="\t",
-                           lineterminator="\n")
+        w = csv.DictWriter(out,
+                           fieldnames=output_columns(db.loci, args.allele_layout),
+                           delimiter="\t", lineterminator="\n",
+                           extrasaction="ignore", restval="")
         w.writeheader()
         w.writerows(rows)
     finally:

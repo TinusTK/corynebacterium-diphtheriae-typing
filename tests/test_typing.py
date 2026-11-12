@@ -111,6 +111,26 @@ class TypingTests(unittest.TestCase):
         self.assertEqual(rows[0]["db_version"], "SYNTHETIC_TEST")
         self.assertEqual(rows[0]["Sample"], "cols")
 
+    def test_separate_allele_columns(self):
+        rows = self.run_tool(self.genome("sep", ["1", "2", "1", "1", "1", "1", "1"]),
+                             extra_args=["--allele-layout", "separate"])
+        self.assertEqual(list(rows[0].keys()),
+                         ["Sample", "tox_gene", "tox_allele", "ST",
+                          "ALLELE1", "ALLELE2", "ALLELE3", "ALLELE4",
+                          "ALLELE5", "ALLELE6", "ALLELE7",
+                          "Identity", "Coverage", "db_version", "notes"])
+        self.assertEqual(rows[0]["ALLELE1"], "atpA(1)")
+        self.assertEqual(rows[0]["ALLELE2"], "dnaE(2)")
+        self.assertEqual(rows[0]["ALLELE7"], "rpoB(1)")
+
+    def test_separate_allele_columns_invalid_fasta(self):
+        bad = os.path.join(self.tmp, "bad2.fasta")
+        with open(bad, "w") as fh:
+            fh.write("not fasta\n")
+        r = self.run_tool(bad, extra_args=["--allele-layout", "separate"])[0]
+        self.assertEqual(r["tox_gene"], "ERROR")
+        self.assertEqual(r["ALLELE1"], "")
+
     def test_toxigenic_known_st(self):
         r = self.run_tool(self.genome("CD001", ["1"] * 7, tox=self.tox["2"]))[0]
         self.assertEqual((r["tox_gene"], r["tox_allele"], r["ST"]), ("tox", "2", "8"))

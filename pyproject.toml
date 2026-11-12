@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cdiph-typing"
-version = "1.0.0"
+version = "1.1.0"
 description = "tox detection, tox allele and 7-gene MLST typing of Corynebacterium diphtheriae assemblies"
 readme = "README.md"
 license = {text = "MIT"}

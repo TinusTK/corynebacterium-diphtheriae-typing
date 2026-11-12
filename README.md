@@ -65,6 +65,11 @@ How to read it:
 | `db_version` | database used, e.g. `Pasteur_2026-10` |
 | `notes` | QC flags and reasons for review; blank when nothing to flag |
 
+To get one column per MLST locus instead of `mlst_profile`, choose **MLST
+allele layout → One column per allele** in Galaxy, or add
+`--allele-layout separate` on the command line. `mlst_profile` is then
+replaced by `ALLELE1` to `ALLELE7`, each holding one call, e.g. `atpA(1)`.
+
 ### tox calls
 
 | `tox_gene` | Rule | `tox_allele` |
@@ -133,7 +138,7 @@ cdiph-typing -d database -i assemblies/*.fasta -o results.tsv
 ```
 
 Batch a folder: `cdiph-typing -d database $(for f in assemblies/*.fasta; do echo -i $f; done) -o results.tsv`.
-Options: `cdiph-typing --help` (thresholds, threads, sample names).
+Options: `cdiph-typing --help` (thresholds, threads, sample names, allele layout).
 
 Tests: `python -m unittest discover -s tests -v`
 
@@ -154,18 +159,19 @@ Shed rejects a version that's already published:
   `pyproject.toml` and `__version__`) and reset the suffix: `1.1.0+galaxy0`
 
 CI shows a warning on every push until the version is bumped. After review and
-merge, tag a release (`git tag v1.1 && git push --tags`, or
-*Releases → Draft a new release* on GitHub). `release.yml` then bundles the
+merge, tag a release named after the tool version with a `v` in front
+(`git tag v1.1.0+galaxy0 && git push --tags`, or *Releases → Draft a new
+release* on GitHub). The GitHub release is titled with the Tool Shed version
+and its notes give the database version. `release.yml` then bundles the
 tool with the database, runs the Galaxy tool tests, creates a GitHub release,
 and publishes the new revision to the Galaxy Tool Shed.
 
 | Release | Database |
 |---|---|
-| v1.0 | Pasteur_2026-10 |
-| v1.0-galaxy1 | Pasteur_2026-10 |
-| v1.0-galaxy2 | Pasteur_2026-10b (first authenticated download) |
-| v1.1 | Pasteur_2027-04 |
-| v1.2 | Pasteur_2027-10 |
+| v1.0.0+galaxy0 | Pasteur_2026-10 |
+| v1.0.0+galaxy1 | Pasteur_2026-10 |
+| v1.0.0+galaxy2 | Pasteur_2026-10b (first authenticated download) |
+| v1.1.0+galaxy0 | Pasteur_2026-10b (adds the one-column-per-allele option) |
 
 ### Authentication (important)
 

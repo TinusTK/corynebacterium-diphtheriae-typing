@@ -1,7 +1,7 @@
-<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy2" profile="22.05">
+<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy0" profile="22.05">
     <description>tox detection, tox allele and MLST from assemblies</description>
     <macros>
-        <token name="@TOOL_VERSION@">1.0.0</token>
+        <token name="@TOOL_VERSION@">1.1.0</token>
     </macros>
     <requirements>
         <requirement type="package" version="2.16.0">blast</requirement>
@@ -23,6 +23,7 @@ python '$__tool_directory__/diphtheria_typing.py'
     --tox-min-coverage $adv.tox_min_coverage
     --mlst-min-identity $adv.mlst_min_identity
     --mlst-min-coverage $adv.mlst_min_coverage
+    --allele-layout '$allele_layout'
     --threads \${GALAXY_SLOTS:-1}
     --output '$output'
     ]]></command>
@@ -30,6 +31,11 @@ python '$__tool_directory__/diphtheria_typing.py'
         <param name="input" type="data" format="fasta" multiple="true"
                label="Assembly FASTA"
                help="One or more assemblies, or a collection. Sample names are taken from the dataset/element names."/>
+        <param name="allele_layout" type="select" label="MLST allele layout"
+               help="Combined keeps all seven MLST calls in one mlst_profile column. Separate puts each locus in its own column, ALLELE1 to ALLELE7.">
+            <option value="combined" selected="true">Combined in one column (mlst_profile)</option>
+            <option value="separate">One column per allele (ALLELE1 to ALLELE7)</option>
+        </param>
         <section name="adv" title="Thresholds" expanded="false">
             <param name="tox_min_identity" type="float" value="99" min="80" max="100" label="tox minimum identity (%)"/>
             <param name="tox_min_coverage" type="float" value="95" min="30" max="100" label="tox minimum coverage (%)"/>
@@ -64,6 +70,18 @@ python '$__tool_directory__/diphtheria_typing.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- Same assembly, one column per allele. -->
+        <test expect_num_outputs="1">
+            <param name="input" value="st1_tox1.fasta"/>
+            <param name="allele_layout" value="separate"/>
+            <output name="output">
+                <assert_contents>
+                    <has_n_columns n="15"/>
+                    <has_line_matching expression="^Sample\ttox_gene\ttox_allele\tST\tALLELE1\tALLELE2\tALLELE3\tALLELE4\tALLELE5\tALLELE6\tALLELE7\tIdentity\tCoverage\tdb_version\tnotes$"/>
+                    <has_line_matching expression="^st1_tox1\ttox\t1\t1\tatpA\(1\)\tdnaE\(1\)\tdnaK\(1\)\tfusA\(1\)\tleuA\(1\)\todhA\(1\)\trpoB\(1\)\t100\.0\t100\.0\tPasteur_.*"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 **What it does**
@@ -88,6 +106,11 @@ Coverage      % of the tox allele covered by the best hit
 db_version    e.g. ``Pasteur_2026-10``
 notes         QC flags and reasons for review
 ============  ==============================================================
+
+With **MLST allele layout** set to "One column per allele", the
+mlst_profile column is replaced by seven columns, ALLELE1 to ALLELE7, each
+holding one locus and its call, e.g. ``atpA(1)`` in ALLELE1 and
+``dnaE(2)`` in ALLELE2. The other columns stay the same.
 
 **tox calling rules**
 

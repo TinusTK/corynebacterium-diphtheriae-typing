@@ -39,18 +39,29 @@ jobs:
           planemo shed_lint --tools build/cdiphtheriae_typing
           planemo test --test_output build/planemo_report.html build/cdiphtheriae_typing
 
+      - name: Read tool version (as shown on the Tool Shed)
+        run: |
+          python - <<'PY' >> "$GITHUB_ENV"
+          import xml.etree.ElementTree as ET
+          root = ET.parse("build/cdiphtheriae_typing/tool.xml").getroot()
+          token = root.find("macros/token[@name='@TOOL_VERSION@']").text.strip()
+          print("TOOLV=" + root.get("version").replace("@TOOL_VERSION@", token))
+          PY
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Release title = Tool Shed version (e.g. v1.0.0+galaxy2);
+          # the database version goes in the release notes.
           tar -czf "cdiphtheriae_typing-${GITHUB_REF_NAME}-${DBV}.tar.gz" -C build cdiphtheriae_typing
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             # Release was created on the GitHub website: attach the files to it
             gh release upload "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html --clobber
           else
             gh release create "$GITHUB_REF_NAME" *.tar.gz build/planemo_report.html \
-              --title "$GITHUB_REF_NAME (database $DBV)" \
-              --notes "Galaxy tool bundle with database **$DBV**. Tool tests passed (report attached)."
+              --title "v$TOOLV" \
+              --notes "Tool Shed version **$TOOLV**. Database: **$DBV**. Galaxy tool bundle; tool tests passed (report attached)."
           fi
 
       - name: Publish to Galaxy Tool Shed
@@ -65,4 +76,4 @@ jobs:
             --shed_key "$TOOLSHED_API_KEY" \
             --force_repository_creation \
             --check_diff \
-            --message "${GITHUB_REF_NAME}: database ${DBV}"
+            --message "v${TOOLV}: database ${DBV}"
