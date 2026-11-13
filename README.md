@@ -13,7 +13,7 @@ I built this tool for public health use, to provide rapid typing of
 > is a free desktop app for Windows, Mac and Linux with a point-and-click
 > interface. *C. diphtheriae* typing is built in: choose a folder of reads or
 > assemblies, press Run and read the results as tables. Nothing to install
-> by hand, and no Galaxy needed.
+> by hand, and no server needed: it all runs locally on your computer.
 
 Database: [BIGSdb-Pasteur *C. diphtheriae* species complex](https://bigsdb.pasteur.fr/diphtheria/),
 refreshed twice yearly through a reviewed pull request.
