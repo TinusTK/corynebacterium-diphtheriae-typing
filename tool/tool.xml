@@ -1,4 +1,4 @@
-<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy0" profile="22.05">
+<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy1" profile="22.05">
     <description>tox detection, tox allele and MLST from assemblies</description>
     <macros>
         <token name="@TOOL_VERSION@">1.1.0</token>
@@ -124,8 +124,23 @@ holding one locus and its call, e.g. ``atpA(1)`` in ALLELE1 and
 production. Non-toxigenic *tox*-bearing (NTTB) strains exist; toxigenicity
 must be confirmed phenotypically (e.g. modified Elek test) per your
 laboratory's procedures.
+
+**Source and documentation**
+
+https://github.com/TinusTK/corynebacterium-diphtheriae-typing, which
+explains every column, the calling rules and the validation. Please cite the
+tool and BIGSdb-Pasteur (see Citations below).
     ]]></help>
     <citations>
+        <!-- The tool itself first: it has no DOI, so BibTeX, which Galaxy
+             renders and exports alongside the DOIs below. -->
+        <citation type="bibtex">@misc{cdiphtheriae_typing,
+  author = {TinusTK},
+  title = {corynebacterium-diphtheriae-typing: C. diphtheriae tox and MLST typing},
+  year = {2026},
+  publisher = {GitHub},
+  url = {https://github.com/TinusTK/corynebacterium-diphtheriae-typing}
+}</citation>
         <citation type="doi">10.1128/JCM.01390-10</citation>
         <citation type="doi">10.1186/1471-2105-10-421</citation>
     </citations>
