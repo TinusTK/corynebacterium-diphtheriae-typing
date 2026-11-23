@@ -60,17 +60,18 @@ How to read it:
 
 ### Columns
 
-| Column | Meaning |
-|---|---|
-| `Sample` | file name, or dataset / collection element name in Galaxy |
-| `tox_gene` | `tox`, `novel tox allele`, `review` or `tox not present` |
-| `tox_allele` | allele number; `~N` novel (closest N); `?N` partial; `NA` |
-| `ST` | sequence type; `novel` (known alleles, new combination); `NA` |
-| `mlst_profile` | per-locus allele calls (see MLST calls below) |
-| `Identity` | % identity of the best tox hit |
-| `Coverage` | % of the tox allele covered by the best hit |
-| `db_version` | database used, e.g. `Pasteur_2026-10` |
-| `notes` | QC flags and reasons for review; blank when nothing to flag |
+| Column | What it is | Meaning |
+|---|---|---|
+| `Sample` | The assembly's name: the input file name with the FASTA extension stripped (`.fasta`, `.fa`, `.fna`, `.fas`, `.fsa`, `.contigs`, `.scaffolds`, and `.gz`), or in Galaxy the dataset or collection element name. | Identifies which genome the row belongs to. Worth a glance when you run a collection, since two files whose names differ only by extension end up with the same label. |
+| `tox_gene` | One of `tox` (exact match to a known allele), `novel tox allele`, `review`, `tox not present`, or `ERROR` if the file could not be read as FASTA. Rules in *tox calls* below. | The headline result: whether the diphtheria toxin gene is present in the assembly. This is a prediction from sequence, not a test of toxin production, so a `tox` or `novel tox allele` call still needs laboratory confirmation before an isolate is called toxigenic. `review` means look at the assembly before accepting any answer. |
+| `tox_allele` | The allele number of the matched tox sequence: a plain number for an exact match, `N,M` when two or more different alleles match exactly, `~N` for a near match (closest allele is N), `?N` for a partial match to N, `NA` when nothing tox-like was found. | Ties the hit to a named allele in the Pasteur database, so the result can be compared with other labs and with earlier isolates. `~N` is a candidate new allele worth submitting; `N,M` or `?N` more often points at the assembly — a duplicated or broken gene — than at the biology. |
+| `ST` | The 7-gene MLST sequence type, looked up in the database's profile table: a number when all seven alleles are exact and the combination is listed, `novel` when all seven are exact but the combination is not listed, `NA` when any locus is not a single exact allele. | Places the isolate in the global MLST scheme, which is what allows comparison with published strains. It is a table lookup, so it is only as complete as the bundled database — see `db_version`. `novel` is a candidate new ST; `NA` usually means an incomplete assembly or not *C. diphtheriae*. ST is too coarse to settle transmission questions on its own. |
+| `mlst_profile` | The call at each of the seven loci in database order, as `locus(call)` joined by `;` — e.g. `atpA(1);dnaE(2);...`. Notation follows `tseemann/mlst`: `N` exact, `~N` novel (closest N), `?N` partial, `-` not found or below the identity threshold, `N,M` two exact copies. See *MLST calls* below. | Shows which locus caused a `novel` or `NA` ST, so you can tell a near miss from a failed assembly. One `~N` among six exact calls is a candidate new allele; several `-` suggests the wrong species or poor coverage. |
+| `ALLELE1`–`ALLELE7` | Only with the separate allele layout, in place of `mlst_profile`: the same seven calls, one per column, each `locus(call)` such as `atpA(1)`, same notation. Blank on an `ERROR` row. | The same information as `mlst_profile`, laid out so one locus can be sorted or filtered on its own in Excel or read by a downstream tool. |
+| `Identity` | % nucleotide identity of the best tox hit, to one decimal: `100.0` for an exact match, `0.0` when no tox-like hit was found, `NA` if the file could not be read. Refers to tox only, not to the MLST loci. | With `Coverage`, says how good the tox match is and why a call fell short of `tox`. High identity with low coverage points to a gene split by an assembly gap; low identity to a divergent or related sequence. |
+| `Coverage` | % of the matched tox allele's length covered by the best hit, to one decimal: `100.0` exact, `0.0` no hit, `NA` unreadable file. Also tox only. | The usual reason a tox-positive genome is flagged `review` rather than called `tox`: a partial gene. Read it alongside `notes`, which says whether the hit sits at a contig edge. |
+| `db_version` | The label of the bundled Pasteur database, read from `database/VERSION.txt` — e.g. `Pasteur_2026-10b`; `unknown` if that file is missing. | Every allele number and ST in the row comes from this version, so keep it with the result. A `novel` call may just be an allele or ST added to the database after this snapshot, so re-run on a newer release before reporting it as new. |
+| `notes` | QC flags and the reason for a `review` or `novel` call, joined by `; `. Blank when there is nothing to flag. For example `assembly only 812,345 bp - check completeness`, `closest tox allele 23; confirm novel allele`, `tox-like hit: partial coverage; hit at contig edge (possible assembly break)`, `exact alleles at all loci but profile not in database`, `no MLST loci found - check species/assembly`, `atpA: multiple exact alleles`, `weak tox-like fragment only (12.0% cov, 88.0% id)`. | Read this first on any row that is not a clean call: it says what to check. A `weak tox-like fragment` note is the one case where an apparently tox-negative row still deserves a look. |
 
 To get one column per MLST locus instead of `mlst_profile`, choose **MLST
 allele layout → One column per allele** in Galaxy, or add
@@ -84,7 +85,8 @@ replaced by `ALLELE1` to `ALLELE7`, each holding one call, e.g. `atpA(1)`.
 | `tox` | 100% identity over 100% of a known allele | allele number |
 | `novel tox allele` | identity ≥ 99% and coverage ≥ 95%, not exact | `~N` (closest N) |
 | `review` | tox-like hit (≥ 30% coverage) failing thresholds — e.g. gene split across contigs, or divergent | `?N` |
-| `tox not present` | no tox-like hit ≥ 30% coverage | `NA` |
+| `tox not present` | no tox-like hit ≥ 30% coverage (a weaker fragment is still recorded in `notes`) | `NA` |
+| `ERROR` | the file could not be read as FASTA | `NA` (and `ST`, `Identity`, `Coverage` all `NA`) |
 
 `review` exists so a gene broken by an assembly gap is **never silently
 reported as absent**. Thresholds are adjustable in Galaxy.
