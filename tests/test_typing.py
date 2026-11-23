@@ -16,6 +16,8 @@ import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(ROOT, "tool", "diphtheria_typing.py")
+sys.path.insert(0, os.path.join(ROOT, "tool"))
+import diphtheria_typing as dt            # noqa: E402  (needs sys.path above)
 LOCI = ["atpA", "dnaE", "dnaK", "fusA", "leuA", "odhA", "rpoB"]
 rng = random.Random(42)
 
@@ -28,6 +30,42 @@ def mutate(seq, positions):
     s = list(seq)
     for p in positions:
         s[p] = {"A": "C", "C": "G", "G": "T", "T": "A"}[s[p]]
+    return "".join(s)
+
+
+STOPS = ("TAA", "TAG", "TGA")
+
+
+def rand_orf(codons):
+    """A plausible coding sequence: GTG, random sense codons, then TGA.
+
+    tox is a real gene, and the tool now judges whether the gene an assembly
+    carries is intact, so the synthetic tox allele has to be a genuine open
+    reading frame rather than random bases.
+    """
+    body = []
+    while len(body) < codons - 2:
+        c = "".join(rng.choice("ACGT") for _ in range(3))
+        if c not in STOPS:
+            body.append(c)
+    return "GTG" + "".join(body) + "TGA"
+
+
+def mutate_in_frame(seq, positions):
+    """Substitute at each position without creating a premature stop codon."""
+    s = list(seq)
+    for p in positions:
+        start = (p // 3) * 3
+        for alt in "ACGT":
+            if alt == s[p]:
+                continue
+            trial = s[:]
+            trial[p] = alt
+            if "".join(trial[start:start + 3]) not in STOPS:
+                s = trial
+                break
+        else:
+            raise AssertionError(f"no silent-of-stop substitution at {p}")
     return "".join(s)
 
 
@@ -60,8 +98,13 @@ class TypingTests(unittest.TestCase):
                                   "3": mutate(base, [50, 300, 400])}
             write_fasta(os.path.join(db, "mlst", "alleles", f"{locus}.fasta"),
                         [(f"{locus}_{k}", v) for k, v in cls.alleles[locus].items()])
-        tox = rand_seq(1683)
-        cls.tox = {"1": tox, "2": mutate(tox, [100, 900, 1500])}
+        # tox_1 and tox_2 are intact genes; tox_3 mirrors the 14 real Pasteur
+        # alleles that are themselves frameshifted (here tox_1 with base 235
+        # deleted, exactly as tox_24 relates to tox_1 in the real database).
+        tox = rand_orf(561)
+        cls.tox = {"1": tox,
+                   "2": mutate_in_frame(tox, [100, 900, 1500]),
+                   "3": tox[:234] + tox[235:]}
         write_fasta(os.path.join(db, "tox", "tox_alleles.fasta"),
                     [(f"tox_{k}", v) for k, v in cls.tox.items()])
         with open(os.path.join(db, "mlst", "profiles.tsv"), "w") as fh:
@@ -143,11 +186,56 @@ class TypingTests(unittest.TestCase):
         self.assertEqual((r["Identity"], r["Coverage"]), ("0.0", "0.0"))
 
     def test_novel_tox_allele(self):
-        novel = mutate(self.tox["1"], [700])           # 1 SNP, 99.94%
+        novel = mutate_in_frame(self.tox["1"], [700])  # 1 SNP, 99.94%
         r = self.run_tool(self.genome("nov", ["1"] * 7, tox=novel))[0]
         self.assertEqual(r["tox_gene"], "novel tox allele")
         self.assertEqual(r["tox_allele"], "~1")
         self.assertGreaterEqual(float(r["Identity"]), 99.0)
+
+    # SNP detail on novel alleles -------------------------------------------
+    def test_novel_tox_reports_one_snp_and_no_disruption(self):
+        novel = mutate_in_frame(self.tox["1"], [700])
+        r = self.run_tool(self.genome("snp1", ["1"] * 7, tox=novel))[0]
+        self.assertIn("closest tox allele 1 (99.9%): 1 SNP", r["notes"])
+        self.assertNotIn("disrupted", r["notes"])
+
+    def test_novel_tox_premature_stop_flagged(self):
+        # Turn codon 100 into a stop codon: an in-frame nonsense change.
+        seq = self.tox["1"]
+        nonsense = seq[:297] + "TAA" + seq[300:]
+        r = self.run_tool(self.genome("stop", ["1"] * 7, tox=nonsense))[0]
+        self.assertEqual(r["tox_gene"], "novel tox allele")
+        self.assertIn("premature stop at codon 100 of 561", r["notes"])
+        self.assertIn("possibly disrupted gene", r["notes"])
+
+    def test_novel_tox_frameshift_flagged(self):
+        seq = self.tox["1"]
+        shifted = seq[:411] + seq[412:]          # 1 bp deletion
+        r = self.run_tool(self.genome("fs", ["1"] * 7, tox=shifted))[0]
+        self.assertEqual(r["tox_gene"], "novel tox allele")
+        self.assertIn("1 bp deletion", r["notes"])
+        self.assertIn("frameshift, premature stop at codon", r["notes"])
+        self.assertIn("possibly disrupted gene", r["notes"])
+
+    def test_closest_allele_itself_disrupted_is_named(self):
+        """A near match to tox_3, which is frameshifted in the database: the
+        row must say the disruption belongs to the allele, not to this SNP."""
+        novel = mutate(self.tox["3"], [900])
+        r = self.run_tool(self.genome("inh", ["1"] * 7, tox=novel))[0]
+        self.assertEqual(r["tox_allele"], "~3")
+        self.assertIn("allele 3 is itself a disrupted tox allele", r["notes"])
+
+    def test_novel_tox_notes_give_no_instruction(self):
+        novel = mutate_in_frame(self.tox["1"], [700])
+        r = self.run_tool(self.genome("noadvice", ["1"] * 7, tox=novel))[0]
+        self.assertNotIn("confirm novel allele", r["notes"])
+        self.assertNotIn("phenotypic", r["notes"])
+
+    def test_novel_mlst_allele_reports_snp_count(self):
+        prof = ["1"] * 7
+        prof[3] = mutate(self.alleles["fusA"]["1"], [222])
+        r = self.run_tool(self.genome("nalc", prof))[0]
+        self.assertIn("fusA: 1 SNP from allele 1", r["notes"])
 
     def test_split_tox_flagged_for_review_not_absent(self):
         r = self.run_tool(self.genome("split", ["1"] * 7, tox=self.tox["1"],
@@ -197,6 +285,75 @@ class TypingTests(unittest.TestCase):
         b = self.genome("b", ["2"] * 7)
         rows = self.run_tool(a, b, extra_args=["-n", "S1", "-n", "S2"])
         self.assertEqual([r["Sample"] for r in rows], ["S1", "S2"])
+
+
+class FakeHit:
+    """Just the fields diff_summary / tox_novel_note read."""
+
+    def __init__(self, qseq, sseq, allele="1", identity=99.9, coverage=100.0,
+                 qstart=1, qend=None):
+        self.qseq, self.sseq, self.allele = qseq, sseq, allele
+        self.identity, self.coverage = identity, coverage
+        self.qstart = qstart
+        self.qend = qend if qend is not None else len(qseq.replace("-", ""))
+        self.qlen = len(qseq.replace("-", ""))
+
+
+class HelperTests(unittest.TestCase):
+    """The difference wording and the gene-integrity check, on their own."""
+
+    def test_diff_summary_counts(self):
+        self.assertEqual(dt.diff_summary(FakeHit("ACGT", "ACGT")),
+                         "no differences")
+        self.assertEqual(dt.diff_summary(FakeHit("ACGT", "ACTT")), "1 SNP")
+        self.assertEqual(dt.diff_summary(FakeHit("ACGTA", "ACTTG")), "2 SNPs")
+        self.assertEqual(dt.diff_summary(FakeHit("ACGT", "AC-T")),
+                         "1 bp deletion")
+        self.assertEqual(dt.diff_summary(FakeHit("AC-GT", "ACAGT")),
+                         "1 bp insertion")
+        self.assertEqual(dt.diff_summary(FakeHit("ACGTA", "AC-TG")),
+                         "1 SNP, 1 bp deletion")
+
+    def test_first_stop(self):
+        self.assertIsNone(dt.first_stop("GTGAAACCC"))
+        self.assertEqual(dt.first_stop("GTGTAACCC"), 2)
+        self.assertEqual(dt.first_stop("GTGAAATGA"), 3)
+        # Out of frame, so not counted as a stop codon.
+        self.assertIsNone(dt.first_stop("GTGATAACCC"))
+
+    def test_cds_status(self):
+        self.assertEqual(dt.cds_status("GTGAAATGA"), ("intact", 3, 3))
+        self.assertEqual(dt.cds_status("GTGTGAAAATGA"), ("disrupted", 2, 4))
+        # No stop codon at all.
+        self.assertEqual(dt.cds_status("GTGAAACCC"), ("disrupted", None, 3))
+
+    def test_integrity_judged_on_found_gene_not_on_closest_allele(self):
+        """A change that restores the reading frame gives an intact gene even
+        when the closest allele is itself frameshifted.
+
+        This is why integrity is read off the found sequence: comparing indel
+        lengths against the closest allele would call this one disrupted.
+        """
+        intact = rand_orf(60)                    # 180 bp, clean ORF
+        broken = intact[:30] + intact[31:]       # the database allele: -1 bp
+        self.assertEqual(dt.cds_status(broken)[0], "disrupted")
+        self.assertEqual(dt.cds_status(intact)[0], "intact")
+
+        # The assembly carries `intact`; the closest allele is `broken`, so the
+        # alignment has a 1 bp insertion relative to it.
+        hit = FakeHit(qseq=broken[:30] + "-" + broken[30:], sseq=intact,
+                      allele="3")
+        note = dt.tox_novel_note(hit, {"3": 11})
+        self.assertIn("1 bp insertion", note)
+        self.assertNotIn("possibly disrupted gene", note)
+        self.assertIn("allele 3 is itself a disrupted tox allele", note)
+
+    def test_partial_alignment_is_not_judged(self):
+        seq = rand_orf(60)
+        hit = FakeHit(qseq=seq, sseq=seq, qend=150, coverage=83.3)
+        note = dt.tox_novel_note(hit, {})
+        self.assertIn("gene not full length, integrity not checked", note)
+        self.assertNotIn("possibly disrupted gene", note)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,10 @@ build/
 *.tar.gz
 out.tsv
 
+# planemo test leftovers
+tool_test_output.html
+tool_test_output.json
+
 # MasterMind Board offline copy (private)
 /CdiphtheriaeTypingtasks.md
 

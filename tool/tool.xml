@@ -1,7 +1,7 @@
-<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy1" profile="22.05">
+<tool id="cdiphtheriae_typing" name="C. diphtheriae typing" version="@TOOL_VERSION@+galaxy0" profile="22.05">
     <description>tox detection, tox allele and MLST from assemblies</description>
     <macros>
-        <token name="@TOOL_VERSION@">1.1.0</token>
+        <token name="@TOOL_VERSION@">1.2.0</token>
     </macros>
     <requirements>
         <requirement type="package" version="2.16.0">blast</requirement>
@@ -82,6 +82,19 @@ python '$__tool_directory__/diphtheria_typing.py'
                 </assert_contents>
             </output>
         </test>
+        <!-- Same assembly with one silent SNP in tox: a novel allele, whose
+             difference from the closest known allele is given in notes. -->
+        <test expect_num_outputs="1">
+            <param name="input" value="tox_novel.fasta"/>
+            <output name="output">
+                <assert_contents>
+                    <has_n_columns n="9"/>
+                    <has_text text="novel tox allele"/>
+                    <has_text text="closest tox allele 1 (99.9%): 1 SNP"/>
+                    <not_has_text text="possibly disrupted gene"/>
+                </assert_contents>
+            </output>
+        </test>
     </tests>
     <help><![CDATA[
 **What it does**
@@ -104,8 +117,32 @@ mlst_profile  per-locus calls, e.g. ``atpA(1);dnaE(2);...``
 Identity      % identity of the best tox hit
 Coverage      % of the tox allele covered by the best hit
 db_version    e.g. ``Pasteur_2026-10``
-notes         QC flags and reasons for review
+notes         QC flags, reasons for review, and how a novel allele differs
 ============  ==============================================================
+
+**Novel alleles in notes**
+
+When a call is ``~N`` (novel), notes says how far the sequence is from the
+closest known allele, and whether the gene the assembly carries looks
+intact. For example::
+
+    closest tox allele 23 (99.9%): 1 SNP
+    closest tox allele 23 (99.9%): 1 bp deletion - frameshift, premature stop at codon 139, possibly disrupted gene
+    closest tox allele 24 (99.9%): 1 SNP; allele 24 is itself a disrupted tox allele (stop at codon 92)
+    fusA: 3 SNPs from allele 4
+
+Gene integrity is judged on the sequence found in the assembly - translated
+from its start codon and checked for a stop codon before the end - not by
+comparison with the closest allele, because some deposited *tox* alleles are
+themselves frameshifted (14 of 76 in Pasteur_2026-10b: real non-toxigenic
+*tox*-bearing variants). When the closest allele is one of those, notes says
+so, since the disruption then belongs to the allele rather than to the
+differences being reported. A partial hit cannot be judged, and notes says
+``gene integrity not checked`` instead of guessing.
+
+``possibly disrupted gene`` is an observation about the sequence. It is not
+a prediction of toxigenicity in either direction, and a ``novel tox allele``
+call is still a *tox*-positive result.
 
 With **MLST allele layout** set to "One column per allele", the
 mlst_profile column is replaced by seven columns, ALLELE1 to ALLELE7, each

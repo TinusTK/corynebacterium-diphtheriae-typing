@@ -25,7 +25,7 @@ import sys
 import tempfile
 from collections import defaultdict
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 OUTPUT_COLUMNS = [
     "Sample", "tox_gene", "tox_allele", "ST", "mlst_profile",
@@ -48,7 +48,10 @@ def output_columns(loci, layout="combined"):
 
 BLAST_FIELDS = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
                 "qstart", "qend", "sstart", "send", "evalue", "bitscore",
-                "qlen", "slen"]
+                "qlen", "slen", "qseq", "sseq"]
+
+# Stop codons, for judging whether a tox gene is intact.
+STOP_CODONS = ("TAA", "TAG", "TGA")
 
 
 # --------------------------------------------------------------------------
@@ -69,6 +72,7 @@ class TypingDB:
         for locus in self.loci:
             if not os.path.exists(self.locus_fasta(locus)):
                 sys.exit(f"ERROR: no allele file for MLST locus {locus}")
+        self.disrupted_tox = self._read_disrupted_tox()
 
     def _read_version(self):
         vf = os.path.join(self.path, "VERSION.txt")
@@ -83,6 +87,24 @@ class TypingDB:
 
     def locus_fasta(self, locus):
         return os.path.join(self.alleles_dir, f"{locus}.fasta")
+
+    def _read_disrupted_tox(self):
+        """{allele: first stop codon} for bundled tox alleles that are
+        themselves disrupted - a stop codon before the end of the gene.
+
+        Read from the database rather than hardcoded, so it stays correct when
+        the Pasteur snapshot is updated. In Pasteur_2026-10b, 14 of the 76 tox
+        alleles are frameshifted: real tox-bearing but non-toxin-producing
+        variants. A near match to one of those must not be reported as a gene
+        this isolate has newly broken.
+        """
+        disrupted = {}
+        for seqid, seq in read_fasta(self.tox_fasta):
+            _, allele = split_allele_id(seqid)
+            status, stop, _ = cds_status(seq)
+            if status == "disrupted":
+                disrupted[allele] = stop
+        return disrupted
 
     def _read_profiles(self):
         with open(self.profiles_tsv, newline="") as fh:
@@ -149,6 +171,37 @@ def split_allele_id(seqid):
     return locus, allele
 
 
+def first_stop(seq):
+    """1-based codon number of the first stop codon, or None if there is none.
+
+    Reads seq in frame from its first base, so the caller must pass a
+    sequence that starts at the gene's start codon.
+    """
+    seq = seq.upper()
+    for i in range(0, len(seq) - 2, 3):
+        if seq[i:i + 3] in STOP_CODONS:
+            return i // 3 + 1
+    return None
+
+
+def cds_status(seq):
+    """Judge a whole gene sequence read from its own start codon.
+
+    Returns (status, stop_codon, total_codons). status is "intact" when the
+    only stop codon is the last one, else "disrupted" - a stop codon before
+    the end (whether from a nonsense change or from a frameshift), or no stop
+    codon at all. stop_codon is None in that last case.
+
+    This looks only at the sequence given, never at another allele, so it is
+    unaffected by whether the closest known allele happens to be in frame.
+    """
+    total = len(seq) // 3
+    stop = first_stop(seq)
+    if stop is not None and stop == total and len(seq) % 3 == 0:
+        return "intact", stop, total
+    return "disrupted", stop, total
+
+
 FASTA_EXTS = (".fasta", ".fa", ".fna", ".fas", ".fsa", ".contigs", ".scaffolds")
 
 
@@ -207,6 +260,41 @@ class Hit:
         return lo <= 1 or hi >= self.slen
 
 
+def diff_counts(hit):
+    """(substitutions, bases inserted, bases deleted) over the aligned region.
+
+    The allele is the query and the assembly the subject, so a gap in qseq is
+    a base the assembly has gained and a gap in sseq one it has lost.
+    """
+    snps = inserted = deleted = 0
+    for q, s in zip(hit.qseq.upper(), hit.sseq.upper()):
+        if q == "-":
+            inserted += 1
+        elif s == "-":
+            deleted += 1
+        elif q != s:
+            snps += 1
+    return snps, inserted, deleted
+
+
+def diff_summary(hit):
+    """Differences from the allele in words: '1 SNP', '2 SNPs, 3 bp deletion'."""
+    snps, inserted, deleted = diff_counts(hit)
+    parts = []
+    if snps:
+        parts.append(f"{snps} SNP{'s' if snps != 1 else ''}")
+    if deleted:
+        parts.append(f"{deleted} bp deletion")
+    if inserted:
+        parts.append(f"{inserted} bp insertion")
+    return ", ".join(parts) or "no differences"
+
+
+def full_length(hit):
+    """True when the alignment covers the whole allele, end to end."""
+    return hit.qstart == 1 and hit.qend == hit.qlen
+
+
 def blast_assembly(assembly, query_fasta, workdir, threads):
     dbprefix = os.path.join(workdir, "asm")
     run(["makeblastdb", "-in", assembly, "-dbtype", "nucl",
@@ -256,9 +344,10 @@ def call_mlst_locus(hits, min_id, min_cov):
         return alleles[0], None
     b = best(hits)
     if b.coverage >= min_cov and b.identity >= min_id:
-        return f"~{b.allele}", None
+        return f"~{b.allele}", f"{diff_summary(b)} from allele {b.allele}"
     if b.identity >= min_id:
-        return f"?{b.allele}", None
+        return f"?{b.allele}", (f"partial match to allele {b.allele} "
+                                f"({b.coverage:.1f}% aligned)")
     return "-", None
 
 
@@ -268,8 +357,46 @@ def call_st(db, calls):
     return db.profiles.get(tuple(calls), "novel")
 
 
-def call_tox(hits, min_id, min_cov):
+def tox_novel_note(hit, disrupted_tox):
+    """The note for a novel tox allele: how it differs from the closest known
+    allele, and whether the gene the assembly carries looks intact.
+
+    Gene integrity is judged on the found sequence alone (cds_status), not by
+    comparing indel lengths with the closest allele: 14 of the bundled alleles
+    are themselves frameshifted, so such a comparison would both blame a
+    reported SNP for a disruption the allele already had and, for a change that
+    restores the frame, call an intact gene broken.
+    """
+    head = f"closest tox allele {hit.allele} ({hit.identity:.1f}%"
+    if hit.coverage < 100:
+        head += f", {hit.coverage:.1f}% aligned"
+    note = f"{head}): {diff_summary(hit)}"
+
+    if full_length(hit):
+        found = hit.sseq.replace("-", "")
+        status, stop, total = cds_status(found)
+        if status == "disrupted":
+            if stop is None:
+                where = "no stop codon found"
+            elif len(found) % 3:
+                # The codon count of a frameshifted sequence means nothing,
+                # so name the cause instead of quoting a total.
+                where = f"frameshift, premature stop at codon {stop}"
+            else:
+                where = f"premature stop at codon {stop} of {total}"
+            note += f" - {where}, possibly disrupted gene"
+    else:
+        note += "; gene not full length, integrity not checked"
+
+    if hit.allele in disrupted_tox:
+        note += (f"; allele {hit.allele} is itself a disrupted tox allele "
+                 f"(stop at codon {disrupted_tox[hit.allele]})")
+    return note
+
+
+def call_tox(hits, min_id, min_cov, disrupted_tox=None):
     """Return dict with tox_gene, tox_allele, Identity, Coverage, note."""
+    disrupted_tox = disrupted_tox or {}
     out = {"tox_gene": "tox not present", "tox_allele": "NA",
            "Identity": 0.0, "Coverage": 0.0, "note": None}
     if not hits:
@@ -287,7 +414,7 @@ def call_tox(hits, min_id, min_cov):
     out["Coverage"] = round(b.coverage, 2)
     if b.identity >= min_id and b.coverage >= min_cov:
         out.update(tox_gene="novel tox allele", tox_allele=f"~{b.allele}")
-        out["note"] = f"closest tox allele {b.allele}; confirm novel allele"
+        out["note"] = tox_novel_note(b, disrupted_tox)
         return out
     # Something tox-like is there but fails thresholds: never silently
     # report this as absent.
@@ -346,7 +473,7 @@ def type_sample(name, assembly, db, query_fasta, args):
             notes.append("no MLST loci found - check species/assembly")
 
     tox = call_tox(hits.get("tox", []), args.tox_min_identity,
-                   args.tox_min_coverage)
+                   args.tox_min_coverage, db.disrupted_tox)
     row.update(tox_gene=tox["tox_gene"], tox_allele=tox["tox_allele"],
                Identity=f"{tox['Identity']:.1f}",
                Coverage=f"{tox['Coverage']:.1f}")

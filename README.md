@@ -35,9 +35,9 @@ One tab-separated row per assembly. Example run on five assemblies
 Sample	tox_gene	tox_allele	ST	mlst_profile	Identity	Coverage	db_version	notes
 CD001	tox	23	534	atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3)	100.0	100.0	Pasteur_2026-10	
 CD002	tox not present	NA	534	atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3)	0.0	0.0	Pasteur_2026-10	
-CD003	novel tox allele	~23	8	atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1)	99.9	100.0	Pasteur_2026-10	closest tox allele 23; confirm novel allele
+CD003	novel tox allele	~23	8	atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1)	99.9	100.0	Pasteur_2026-10	closest tox allele 23 (99.9%): 1 SNP
 CD004	review	?23	novel	atpA(1);dnaE(2);dnaK(1);fusA(7);leuA(10);odhA(4);rpoB(3)	100.0	53.5	Pasteur_2026-10	exact alleles at all loci but profile not in database; tox-like hit: partial coverage; hit at contig edge (possible assembly break)
-CD005	tox not present	NA	NA	atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3)	0.0	0.0	Pasteur_2026-10	
+CD005	tox not present	NA	NA	atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3)	0.0	0.0	Pasteur_2026-10	fusA: 2 SNPs from allele 4
 ```
 
 The same report opened in Excel or Galaxy:
@@ -46,9 +46,9 @@ The same report opened in Excel or Galaxy:
 |---|---|---|---|---|---:|---:|---|---|
 | CD001 | tox | 23 | 534 | atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3) | 100.0 | 100.0 | Pasteur_2026-10 | |
 | CD002 | tox not present | NA | 534 | atpA(1);dnaE(2);dnaK(1);fusA(1);leuA(10);odhA(4);rpoB(3) | 0.0 | 0.0 | Pasteur_2026-10 | |
-| CD003 | novel tox allele | ~23 | 8 | atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1) | 99.9 | 100.0 | Pasteur_2026-10 | closest tox allele 23; confirm novel allele |
+| CD003 | novel tox allele | ~23 | 8 | atpA(1);dnaE(1);dnaK(1);fusA(1);leuA(1);odhA(1);rpoB(1) | 99.9 | 100.0 | Pasteur_2026-10 | closest tox allele 23 (99.9%): 1 SNP |
 | CD004 | review | ?23 | novel | atpA(1);dnaE(2);dnaK(1);fusA(7);leuA(10);odhA(4);rpoB(3) | 100.0 | 53.5 | Pasteur_2026-10 | exact alleles at all loci but profile not in database; tox-like hit: partial coverage; hit at contig edge (possible assembly break) |
-| CD005 | tox not present | NA | NA | atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3) | 0.0 | 0.0 | Pasteur_2026-10 | |
+| CD005 | tox not present | NA | NA | atpA(1);dnaE(2);dnaK(1);fusA(~4);leuA(10);odhA(4);rpoB(3) | 0.0 | 0.0 | Pasteur_2026-10 | fusA: 2 SNPs from allele 4 |
 
 How to read it:
 
@@ -71,7 +71,7 @@ How to read it:
 | `Identity` | % nucleotide identity of the best tox hit, to one decimal: `100.0` for an exact match, `0.0` when no tox-like hit was found, `NA` if the file could not be read. Refers to tox only, not to the MLST loci. | With `Coverage`, says how good the tox match is and why a call fell short of `tox`. High identity with low coverage points to a gene split by an assembly gap; low identity to a divergent or related sequence. |
 | `Coverage` | % of the matched tox allele's length covered by the best hit, to one decimal: `100.0` exact, `0.0` no hit, `NA` unreadable file. Also tox only. | The usual reason a tox-positive genome is flagged `review` rather than called `tox`: a partial gene. Read it alongside `notes`, which says whether the hit sits at a contig edge. |
 | `db_version` | The label of the bundled Pasteur database, read from `database/VERSION.txt` — e.g. `Pasteur_2026-10b`; `unknown` if that file is missing. | Every allele number and ST in the row comes from this version, so keep it with the result. A `novel` call may just be an allele or ST added to the database after this snapshot, so re-run on a newer release before reporting it as new. |
-| `notes` | QC flags and the reason for a `review` or `novel` call, joined by `; `. Blank when there is nothing to flag. For example `assembly only 812,345 bp - check completeness`, `closest tox allele 23; confirm novel allele`, `tox-like hit: partial coverage; hit at contig edge (possible assembly break)`, `exact alleles at all loci but profile not in database`, `no MLST loci found - check species/assembly`, `atpA: multiple exact alleles`, `weak tox-like fragment only (12.0% cov, 88.0% id)`. | Read this first on any row that is not a clean call: it says what to check. A `weak tox-like fragment` note is the one case where an apparently tox-negative row still deserves a look. |
+| `notes` | QC flags, the reason for a `review` or `novel` call, and for a novel allele how it differs from the closest known one, joined by `; `. Blank when there is nothing to flag. For example `assembly only 812,345 bp - check completeness`, `closest tox allele 23 (99.9%): 1 SNP`, `fusA: 3 SNPs from allele 4`, `tox-like hit: partial coverage; hit at contig edge (possible assembly break)`, `exact alleles at all loci but profile not in database`, `no MLST loci found - check species/assembly`, `atpA: multiple exact alleles`, `weak tox-like fragment only (12.0% cov, 88.0% id)`. See *Novel alleles* below. | Read this first on any row that is not a clean call: it says what to check. A `weak tox-like fragment` note is the one case where an apparently tox-negative row still deserves a look. |
 
 To get one column per MLST locus instead of `mlst_profile`, choose **MLST
 allele layout → One column per allele** in Galaxy, or add
@@ -96,6 +96,41 @@ reported as absent**. Thresholds are adjustable in Galaxy.
 Per-locus notation (as in `tseemann/mlst`): `N` exact, `~N` novel allele
 (closest N), `?N` partial, `-` missing. `ST` is the sequence type, `novel`
 (all alleles known, combination new) or `NA` (any locus not exact).
+
+### Novel alleles
+
+A `~N` call means the sequence is close to allele N but is not any allele in
+the bundled database — a candidate new allele to submit to BIGSdb-Pasteur.
+`notes` says how far it is, and for *tox* whether the gene the assembly
+carries looks intact:
+
+```
+closest tox allele 23 (99.9%): 1 SNP
+closest tox allele 23 (99.9%): 1 bp deletion - frameshift, premature stop at codon 139, possibly disrupted gene
+closest tox allele 24 (99.9%): 1 SNP; allele 24 is itself a disrupted tox allele (stop at codon 92)
+closest tox allele 23 (99.5%, 96.4% aligned): 4 SNPs; gene not full length, integrity not checked
+fusA: 3 SNPs from allele 4
+```
+
+The counts are not simply `Identity` restated: that column is rounded to one
+decimal (99.9% is one *or* two SNPs in a 1683 bp gene), it cannot distinguish
+a substitution from an indel, and it describes *tox* only — the MLST loci have
+no identity column at all.
+
+**Gene integrity is read off the sequence found in the assembly**, translated
+from its start codon and checked for a stop codon before the end. It is not
+inferred by comparing lengths with the closest allele, because 14 of the 76
+*tox* alleles in Pasteur_2026-10b are themselves frameshifted — real
+non-toxigenic *tox*-bearing variants, stopping as early as codon 18 of 561.
+Against one of those, a length comparison would blame a reported SNP for a
+disruption the allele already carried, and would call a frame-restoring change
+"disrupted" when it in fact yields an intact gene. When the closest allele is
+one of the 14, `notes` says so. A partial hit cannot be judged, and `notes`
+says `integrity not checked` rather than guessing.
+
+`possibly disrupted gene` is an observation about the sequence, not a
+prediction of toxigenicity in either direction, and `novel tox allele` is
+still a *tox*-positive call.
 
 ---
 
@@ -181,6 +216,7 @@ and publishes the new revision to the Galaxy Tool Shed.
 | v1.0.0+galaxy1 | Pasteur_2026-10 |
 | v1.0.0+galaxy2 | Pasteur_2026-10b (first authenticated download) |
 | v1.1.0+galaxy0 | Pasteur_2026-10b (adds the one-column-per-allele option) |
+| v1.2.0+galaxy0 | Pasteur_2026-10b (notes say how a novel allele differs, and whether the gene looks intact) |
 
 ### Authentication (important)
 
